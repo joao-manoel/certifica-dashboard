@@ -29,12 +29,14 @@ export default async function ProfileButton() {
       >
         <DropdownMenuItem
           asChild
-          className="flex cursor-pointer items-center justify-between p-4 transition-colors hover:bg-zinc-200 dark:hover:bg-black/10"
+          className="flex cursor-pointer items-center justify-between p-4 transition-colors hover:bg-zinc-200 dark:hover:bg-black/10 focus:bg-transparent dark:focus:bg-black/10 focus:text-black"
         >
           <Link href="/account">
             <div className="flex gap-2">
               <Avatar>
-                <AvatarFallback>{getInitials('Administrador')}</AvatarFallback>
+                <AvatarFallback className="bg-zinc-200">
+                  {getInitials('Administrador')}
+                </AvatarFallback>
               </Avatar>
               <div className="flex flex-col justify-center">
                 <span className="text-sm font-bold text-black dark:text-white">
@@ -45,7 +47,7 @@ export default async function ProfileButton() {
                 </span>
               </div>
             </div>
-            <div className="rounded-sm p-2 hover:bg-muted">
+            <div className="rounded-sm p-2 hover:bg-green-800 hover:text-white transition-colors">
               <span>Ver Perfil</span>
             </div>
           </Link>
@@ -53,12 +55,9 @@ export default async function ProfileButton() {
         <Separator />
         <DropdownMenuItem
           asChild
-          className="cursor-pointer p-4 transition-colors hover:bg-zinc-200 hover:text-red-400 dark:hover:bg-black/10"
+          className="cursor-pointer p-4 transition-colors  dark:hover:bg-black/10 focus:bg-transparent dark:focus:bg-black/10 focus:text-red-400"
         >
-          <a
-            href="/api/auth/sign-out"
-            className="text-red-400 dark:hover:text-red-400"
-          >
+          <a href="/api/auth/sign-out" className="text-black ">
             <LogOut />
             <span className="font-bold">Sair da conta</span>
           </a>

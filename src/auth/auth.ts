@@ -22,7 +22,7 @@ export async function auth() {
     const { user } = await getProfile()
     return { user }
   } catch (err) {
-    cookieStore.delete('token')
+    //cookieStore.delete('token')
     return { user: null }
   }
 }
