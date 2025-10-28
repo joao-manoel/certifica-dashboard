@@ -24,7 +24,7 @@ export function FloatingLabelInput({
     <div className="relative">
       <Input
         id={id}
-        className={`w-full rounded-md bg-white px-4 pb-2 pt-6 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-background dark:text-gray-400 ${className}`}
+        className={`w-full rounded-md bg-white px-4 pb-2 pt-6 text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-800 dark:bg-background dark:text-gray-400 ${className}`}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onFocus={() => setIsFocused(true)}
@@ -35,7 +35,7 @@ export function FloatingLabelInput({
         htmlFor={id}
         className={`absolute left-4 transition-all duration-200 ${
           isFocused || value
-            ? 'top-1 text-[9px] text-blue-500'
+            ? 'top-1 text-[9px] text-shadow-green-800'
             : 'top-1/2 -translate-y-1/2 text-gray-500'
         }`}
       >
