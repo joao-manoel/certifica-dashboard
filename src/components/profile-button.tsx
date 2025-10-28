@@ -14,7 +14,7 @@ import {
 import { Separator } from './ui/separator'
 
 export default async function ProfileButton() {
-  // const { user } = await auth()
+  const { user } = await auth()
 
   return (
     <DropdownMenu>
@@ -23,7 +23,10 @@ export default async function ProfileButton() {
           <AvatarFallback>{getInitials('Administrador')}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="mt-6 w-[354px] bg-muted">
+      <DropdownMenuContent
+        align="end"
+        className="mt-6 w-[354px] bg-muted hover:bg-muted/90"
+      >
         <DropdownMenuItem
           asChild
           className="flex cursor-pointer items-center justify-between p-4 transition-colors hover:bg-zinc-200 dark:hover:bg-black/10"
@@ -35,10 +38,10 @@ export default async function ProfileButton() {
               </Avatar>
               <div className="flex flex-col justify-center">
                 <span className="text-sm font-bold text-black dark:text-white">
-                  Administrador
+                  {user?.name}
                 </span>
                 <span className="text-xs font-thin text-muted-foreground">
-                  admin@certifica.eng.br
+                  {user?.email}
                 </span>
               </div>
             </div>

@@ -21,5 +21,6 @@ export async function signInWithUsername({
       }
     })
     .json<SignInWithUsernameResponse>()
+
   return result
 }

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 
 import { useFormState } from '@/hooks/use-form-state'
 import { cn } from '@/lib/utils'
-import { signInWithUsernameAction } from '@/action/sign-in-action'
+import { signInWithUsernameAction } from '@/actions/sign-in-action'
 
 export default function SignInForm() {
   const router = useRouter()
@@ -17,8 +17,9 @@ export default function SignInForm() {
 
   useEffect(() => {
     if (success) {
-      router.push(`/sign-in/verify?email=${message}`)
+      router.push(`/`)
     }
+    console.log('message', message)
   }, [success, message, router])
 
   return (
@@ -27,6 +28,9 @@ export default function SignInForm() {
         <div className="flex flex-col gap-6">
           <div className="flex flex-col items-center gap-2">
             <h1 className="text-xl font-bold">Fazer login</h1>
+          </div>
+          <div className="flex justify-center text-red-500 min-h-8 items-center">
+            {message && message}
           </div>
           <div className="flex flex-col gap-6">
             <div className="grid gap-2">
@@ -47,7 +51,7 @@ export default function SignInForm() {
             </div>
             <Button
               type="submit"
-              className="w-full dark:bg-blue-600 dark:text-white dark:hover:bg-blue-700"
+              className="w-full dark:bg-green-800 dark:text-white dark:hover:bg-green-800"
               disabled={isPending}
             >
               Continuar
