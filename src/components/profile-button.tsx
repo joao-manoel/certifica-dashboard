@@ -1,4 +1,4 @@
-import { LogOut, Settings } from 'lucide-react'
+import { LogOut, Settings, User } from 'lucide-react'
 import Link from 'next/link'
 
 import { auth } from '@/auth/auth'
@@ -18,12 +18,8 @@ export default async function ProfileButton() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex items-center gap-3 outline-none">
-        <Avatar className="size-12">
-          <AvatarFallback className="bg-accent text-white font-medium ">
-            {getInitials(user?.name || '')}
-          </AvatarFallback>
-        </Avatar>
+      <DropdownMenuTrigger className="flex items-center gap-3 outline-none mr-15">
+        <User className="size-5" />
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
