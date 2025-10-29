@@ -1,6 +1,7 @@
 'use client'
 import { Anton } from 'next/font/google'
 import Image from 'next/image'
+import LogoIcon from '@/assets/images/certifica-icon-verde.png'
 const _anton = Anton({ subsets: ['latin'], weight: '400' })
 
 interface LogoProps {
@@ -16,7 +17,7 @@ export default function Logo({ size = 'md' }: LogoProps) {
         } flex items-center justify-center -mt-2`}
       >
         <Image
-          src="/images/certifica-icon-verde.png"
+          src={LogoIcon}
           alt="Certifica"
           width={20}
           height={20}
