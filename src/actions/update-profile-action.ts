@@ -2,6 +2,7 @@
 
 import { updateUser } from '@/http/update-user'
 import { HTTPError } from 'ky'
+import { revalidateTag } from 'next/cache'
 
 import { z } from 'zod'
 
@@ -47,6 +48,8 @@ export async function updateProfileAction(data: FormData) {
         errors: null
       }
     }
+
+    revalidateTag('profile', 'update-profile-action')
 
     return {
       success: true,
