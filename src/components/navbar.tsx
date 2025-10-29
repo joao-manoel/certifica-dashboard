@@ -11,7 +11,8 @@ import {
   PlusCircle,
   List,
   Globe,
-  ArrowUpRight
+  ArrowUpRight,
+  BookOpenText
 } from 'lucide-react'
 import { useMenu } from '@/context/menu-context'
 
@@ -51,6 +52,12 @@ const footerItems = [
     label: 'Certifica Site',
     href: 'https://certifica.eng.br',
     leftIcon: <Globe className="size-5 text-gray-400" />,
+    rightIcon: <ArrowUpRight className="size-4 text-gray-400" />
+  },
+  {
+    label: 'Certifica Blog',
+    href: 'https://blog.certifica.eng.br',
+    leftIcon: <BookOpenText className="size-5 text-gray-400" />,
     rightIcon: <ArrowUpRight className="size-4 text-gray-400" />
   }
 ] as const
