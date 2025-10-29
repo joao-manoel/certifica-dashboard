@@ -1,3 +1,5 @@
+import AdminDashboard from "@/components/dashboard-home";
+
 export default async function DashboardPage() {
-  return <h1>Admin</h1>
+  return <AdminDashboard />
 }

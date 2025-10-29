@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 
 import { isAuthenticated } from '@/auth/auth'
 import NavBar from '@/components/navbar'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 export default async function DashboardLayout({
   children
@@ -12,14 +13,14 @@ export default async function DashboardLayout({
     redirect('/sign-in')
   }
   return (
-    <div className="h-screen">
-      <div className="flex h-full">
+    <div className="h-[calc(100vh-81px)] ">
+      <div className="flex ">
         <NavBar />
-        <div className="w-full overflow-scroll">
-          <div className="container-wrapper">
-            <div className="container p-4">{children}</div>
+        <ScrollArea className="w-full">
+          <div className="container-wrapper ">
+            <div className="container p-4  m-auto mt-2">{children}</div>
           </div>
-        </div>
+        </ScrollArea>
       </div>
     </div>
   )

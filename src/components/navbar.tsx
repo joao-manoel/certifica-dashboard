@@ -9,7 +9,9 @@ import {
   LayoutDashboard,
   Users,
   PlusCircle,
-  List
+  List,
+  Globe,
+  ArrowUpRight
 } from 'lucide-react'
 import { useMenu } from '@/context/menu-context'
 
@@ -44,6 +46,15 @@ const menuItems: MenuItem[] = [
   }
 ]
 
+const footerItems = [
+  {
+    label: 'Certifica Site',
+    href: 'https://certifica.eng.br',
+    leftIcon: <Globe className="size-5 text-gray-400" />,
+    rightIcon: <ArrowUpRight className="size-4 text-gray-400" />
+  }
+] as const
+
 export default function NavBar() {
   const { isOpen } = useMenu()
   const pathname = usePathname()
@@ -72,35 +83,36 @@ export default function NavBar() {
     <aside
       className={`${isOpen ? 'w-80' : 'w-20'} transition-all duration-200`}
     >
-      <nav className="flex h-full w-full flex-col border-r p-3">
-        {menuItems.map((item) =>
-          item.children ? (
-            <div key={item.label} className="mb-1">
-              {/* Cabeçalho do grupo com arrow */}
-              <button
-                type="button"
-                onClick={() => (isOpen ? toggle(item.label) : undefined)}
-                className={`flex w-full items-center gap-2 rounded-md p-2 transition-colors hover:bg-gray-100 dark:hover:bg-black/20
+      <nav className="flex h-[calc(100vh-81px)] w-full flex-col border-r justify-between ">
+        <div className="flex flex-col p-3">
+          {menuItems.map((item) =>
+            item.children ? (
+              <div key={item.label} className="mb-1">
+                {/* Cabeçalho do grupo com arrow */}
+                <button
+                  type="button"
+                  onClick={() => (isOpen ? toggle(item.label) : undefined)}
+                  className={`flex w-full items-center gap-2 rounded-md p-2 transition-colors hover:bg-gray-100 dark:hover:bg-black/20
                   ${isOpen ? 'justify-between' : 'justify-center'}`}
-                aria-expanded={!!openMap[item.label]}
-                aria-controls={`submenu-${item.label}`}
-              >
-                <div
-                  className={`flex items-center ${
-                    isOpen ? '' : 'justify-center'
-                  }`}
+                  aria-expanded={!!openMap[item.label]}
+                  aria-controls={`submenu-${item.label}`}
                 >
-                  {item.icon}
-                  <span
-                    className={`ml-2 text-sm font-medium text-gray-800
-                    ${isOpen ? 'inline' : 'hidden'}`}
+                  <div
+                    className={`flex items-center ${
+                      isOpen ? '' : 'justify-center'
+                    }`}
                   >
-                    {item.label}
-                  </span>
-                </div>
-                {/* seta só quando aberto */}
-                <ChevronDown
-                  className={`size-4 text-gray-400 transition-transform
+                    {item.icon}
+                    <span
+                      className={`ml-2 text-sm font-medium text-gray-800
+                    ${isOpen ? 'inline' : 'hidden'}`}
+                    >
+                      {item.label}
+                    </span>
+                  </div>
+                  {/* seta só quando aberto */}
+                  <ChevronDown
+                    className={`size-4 text-gray-400 transition-transform
                   ${
                     isOpen
                       ? openMap[item.label]
@@ -108,13 +120,13 @@ export default function NavBar() {
                         : 'rotate-0'
                       : 'hidden'
                   }`}
-                />
-              </button>
+                  />
+                </button>
 
-              {/* Submenu (expande só se sidebar aberta) */}
-              <div
-                id={`submenu-${item.label}`}
-                className={`grid overflow-hidden transition-[grid-template-rows,opacity] duration-200
+                {/* Submenu (expande só se sidebar aberta) */}
+                <div
+                  id={`submenu-${item.label}`}
+                  className={`grid overflow-hidden transition-[grid-template-rows,opacity] duration-200
                 ${
                   isOpen
                     ? openMap[item.label]
@@ -122,50 +134,80 @@ export default function NavBar() {
                       : 'grid-rows-[0fr] opacity-0'
                     : 'hidden'
                 }`}
-              >
-                <div className="min-h-0">
-                  {item.children.map((sub) => {
-                    const isActive =
-                      pathname === sub.href ||
-                      pathname.startsWith(sub.href + '/')
-                    return (
-                      <Link
-                        key={sub.href}
-                        href={sub.href}
-                        className={`mt-1 ml-9 flex items-center gap-2 rounded-md p-2 text-sm transition-colors
+                >
+                  <div className="min-h-0">
+                    {item.children.map((sub) => {
+                      const isActive =
+                        pathname === sub.href ||
+                        pathname.startsWith(sub.href + '/')
+                      return (
+                        <Link
+                          key={sub.href}
+                          href={sub.href}
+                          className={`mt-1 ml-9 flex items-center gap-2 rounded-md p-2 text-sm transition-colors
                           hover:bg-gray-100 dark:hover:bg-black/20
                           ${
                             isActive
                               ? 'bg-gray-100 dark:bg-black/20 font-medium'
                               : ''
                           }`}
-                      >
-                        {/* bullets/mini ícones opcionais */}
-                        {item.icon}
-                        <span>{sub.label}</span>
-                      </Link>
-                    )
-                  })}
+                        >
+                          {/* bullets/mini ícones opcionais */}
+                          {item.icon}
+                          <span>{sub.label}</span>
+                        </Link>
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : (
+            ) : (
+              <Link
+                key={item.label}
+                href={item.href!}
+                className={`mb-1 flex items-center gap-2 rounded-md p-2 transition-colors hover:bg-gray-100 dark:hover:bg-black/20
+                ${isOpen ? 'justify-start' : 'justify-center'}`}
+              >
+                {item.icon}
+                <span
+                  className={`ml-2 text-sm font-medium text-gray-800
+                ${isOpen ? 'inline' : 'hidden'}`}
+                >
+                  {item.label}
+                </span>
+              </Link>
+            )
+          )}
+        </div>
+
+        <div className="flex flex-col p-3">
+          {footerItems.map((item) => (
             <Link
               key={item.label}
-              href={item.href!}
-              className={`mb-1 flex items-center gap-2 rounded-md p-2 transition-colors hover:bg-gray-100 dark:hover:bg-black/20
-                ${isOpen ? 'justify-start' : 'justify-center'}`}
+              href={item.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`${item.label} (abre em nova aba)`}
+              title={`${item.label} (abre em nova aba)`}
+              className={`flex items-center gap-2 rounded-md p-2 transition-colors hover:bg-gray-100 dark:hover:bg-black/20
+                ${isOpen ? 'justify-between' : 'justify-center'}`}
             >
-              {item.icon}
-              <span
-                className={`ml-2 text-sm font-medium text-gray-800
-                ${isOpen ? 'inline' : 'hidden'}`}
-              >
-                {item.label}
+              <div className="flex items-center">
+                {item.leftIcon}
+                <span
+                  className={`ml-2 text-sm font-medium text-gray-800 ${
+                    isOpen ? 'inline' : 'hidden'
+                  }`}
+                >
+                  {item.label}
+                </span>
+              </div>
+              <span className={`${isOpen ? 'inline-flex' : 'hidden'}`}>
+                {item.rightIcon}
               </span>
             </Link>
-          )
-        )}
+          ))}
+        </div>
       </nav>
     </aside>
   )

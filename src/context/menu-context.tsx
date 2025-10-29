@@ -15,7 +15,7 @@ interface MenuProviderProps {
 }
 
 export const MenuProvider = ({ children }: MenuProviderProps) => {
-  const [isOpen, setIsOpen] = useState<boolean>(false)
+  const [isOpen, setIsOpen] = useState<boolean>(true)
 
   // Função para alternar o estado do menu
   const setOpen = (open: boolean) => setIsOpen(open)

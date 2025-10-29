@@ -1,17 +1,17 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Roboto, Roboto_Mono } from 'next/font/google'
 // @ts-ignore: allow side-effect CSS import without type declarations
 import './globals.css'
 import Providers from './providers'
 import Header from '@/components/header'
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const robotoSans = Roboto({
+  variable: '--font-roboto-sans',
   subsets: ['latin']
 })
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+const robotoMono = Roboto_Mono({
+  variable: '--font-roboto-mono',
   subsets: ['latin']
 })
 
@@ -28,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${robotoSans.variable} ${robotoMono.variable} antialiased h-full`}
         cz-shortcut-listen="true"
       >
         <Providers>

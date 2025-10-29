@@ -1,4 +1,4 @@
-import { LogOut } from 'lucide-react'
+import { LogOut, Settings } from 'lucide-react'
 import Link from 'next/link'
 
 import { auth } from '@/auth/auth'
@@ -19,8 +19,10 @@ export default async function ProfileButton() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex items-center gap-3 outline-none">
-        <Avatar>
-          <AvatarFallback>{getInitials('Administrador')}</AvatarFallback>
+        <Avatar className="size-12">
+          <AvatarFallback className="bg-accent text-white font-medium ">
+            {getInitials(user?.name || '')}
+          </AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent
@@ -33,9 +35,9 @@ export default async function ProfileButton() {
         >
           <Link href="/account">
             <div className="flex gap-2">
-              <Avatar>
-                <AvatarFallback className="bg-zinc-200">
-                  {getInitials('Administrador')}
+              <Avatar className="size-12">
+                <AvatarFallback className="bg-accent text-white font-medium">
+                  {getInitials(user?.name || '')}
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col justify-center">
@@ -47,7 +49,7 @@ export default async function ProfileButton() {
                 </span>
               </div>
             </div>
-            <div className="rounded-sm p-2 hover:bg-green-800 hover:text-white transition-colors">
+            <div className="rounded-sm p-2 hover:bg-green-900/20 hover:text-black transition-colors bg-green-950/10">
               <span>Ver Perfil</span>
             </div>
           </Link>
@@ -55,10 +57,25 @@ export default async function ProfileButton() {
         <Separator />
         <DropdownMenuItem
           asChild
-          className="cursor-pointer p-4 transition-colors  dark:hover:bg-black/10 focus:bg-transparent dark:focus:bg-black/10 focus:text-red-400"
+          className="cursor-pointer p-4 transition-colors   focus:bg-black/5 dark:focus:bg-black/10 focus:text-black "
+        >
+          <a href="/account" className="text-black flex gap-4">
+            <Settings className="size-7 text-accent " />
+            <div>
+              <h1 className="font-bold">Minha conta</h1>
+              <span className="text-accent/90 font-normal text-xs">
+                Gerencie dados e preferências
+              </span>
+            </div>
+          </a>
+        </DropdownMenuItem>
+        <Separator />
+        <DropdownMenuItem
+          asChild
+          className="cursor-pointer p-4 transition-colors  focus:bg-black/5 dark:focus:bg-black/10 text-red-500 focus:text-red-500"
         >
           <a href="/api/auth/sign-out" className="text-black ">
-            <LogOut />
+            <LogOut className="size-7 text-red-500" />
             <span className="font-bold">Sair da conta</span>
           </a>
         </DropdownMenuItem>
