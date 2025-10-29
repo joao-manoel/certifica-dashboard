@@ -41,7 +41,7 @@ export default async function ProfileButton() {
                   {user?.name}
                 </span>
                 <span className="text-xs font-thin text-muted-foreground">
-                  {user?.email}
+                  @{user?.username}
                 </span>
               </div>
             </div>
@@ -55,7 +55,7 @@ export default async function ProfileButton() {
           asChild
           className="cursor-pointer p-4 transition-colors   focus:bg-black/5 dark:focus:bg-black/10 focus:text-black "
         >
-          <a href="/account" className="text-black flex gap-4">
+          <a href="/settings" className="text-black flex gap-4">
             <Settings className="size-7 text-accent " />
             <div>
               <h1 className="font-bold">Minha conta</h1>

@@ -3,7 +3,6 @@
 import { signInWithUsername } from '@/http/sign-in-with-username'
 import { HTTPError } from 'ky'
 import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
 
 import { z } from 'zod'
 

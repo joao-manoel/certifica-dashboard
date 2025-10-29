@@ -19,7 +19,6 @@ export default function SignInForm() {
     if (success) {
       router.push(`/`)
     }
-    console.log('message', message)
   }, [success, message, router])
 
   return (

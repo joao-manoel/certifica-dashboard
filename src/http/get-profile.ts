@@ -1,12 +1,12 @@
 import { api } from './api-client'
 
-interface GetProfileResponse {
+export interface GetProfileResponse {
   user: {
-    id: number
+    id: string
     username: string
     name: string
     email?: string | null
-    role: 'ADMIN' | 'USER' | 'MOD'
+    role: 'ADMIN' | 'USER' | 'EDITOR'
   }
 }
 

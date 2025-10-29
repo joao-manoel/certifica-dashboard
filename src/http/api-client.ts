@@ -20,6 +20,7 @@ export const api = ky.create({
         if (token) {
           request.headers.set('Authorization', `Bearer ${token}`)
         }
+        request.headers.set('x-api-key', process.env.NEXT_PUBLIC_API_KEY || '')
       }
     ]
   }
