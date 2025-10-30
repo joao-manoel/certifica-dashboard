@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import {
   createContext,
@@ -6,8 +6,8 @@ import {
   useContext,
   useMemo,
   useRef,
-  useState,
-} from "react"
+  useState
+} from 'react'
 
 export type AppContextValue = {
   activeThread: string | null
@@ -39,7 +39,7 @@ export const AppContext = createContext<AppContextValue>({
   setActiveThread: () => {},
   threadBubbles: {},
   addThreadBubble: () => {},
-  removeThreadBubble: () => {},
+  removeThreadBubble: () => {}
 })
 
 export const AppConsumer = AppContext.Consumer
@@ -70,7 +70,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
         threadBubblesRef.current[id] = [
           ...threadBubblesRef.current[id],
-          element,
+          element
         ]
       })
       setThreadBubbles({ ...threadBubblesRef.current })
@@ -80,8 +80,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const removeThreadBubble = useCallback(
     (threadIdOrElement: string | HTMLElement) => {
-      const isElement = typeof threadIdOrElement !== "string"
-      const isString = typeof threadIdOrElement === "string"
+      const isElement = typeof threadIdOrElement !== 'string'
+      const isString = typeof threadIdOrElement === 'string'
 
       if (isString) {
         delete threadBubblesRef.current[threadIdOrElement]
@@ -127,14 +127,14 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       setActiveThread,
       threadBubbles,
       addThreadBubble,
-      removeThreadBubble,
+      removeThreadBubble
     }),
     [
       activeThread,
       setActiveThread,
       threadBubbles,
       addThreadBubble,
-      removeThreadBubble,
+      removeThreadBubble
     ]
   )
 
@@ -150,7 +150,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 export const useAppState = (): AppContextValue => {
   const context = useContext(AppContext)
   if (!context) {
-    throw new Error("useAppState must be used within an AppProvider")
+    throw new Error('useAppState must be used within an AppProvider')
   }
   return context
 }
