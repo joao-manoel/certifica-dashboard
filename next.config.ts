@@ -8,6 +8,14 @@ const nextConfig: NextConfig = {
     mutation: { revalidate: 0 }, // invalida imediatamente
     short: { revalidate: 60 }, // 1 min
     long: { revalidate: 60 * 60 } // 1 hora
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**' // aceita qualquer hostname HTTPS
+      }
+    ]
   }
 }
 

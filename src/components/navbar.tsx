@@ -38,7 +38,7 @@ const menuItems: MenuItem[] = [
   {
     label: 'Posts',
     icon: <FileText className="size-5 text-gray-400" />,
-    href: '/post'
+    href: '/posts'
   },
   {
     label: 'Usuários',

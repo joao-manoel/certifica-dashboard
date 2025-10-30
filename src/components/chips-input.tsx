@@ -18,12 +18,14 @@ export function ChipsInput({
   label,
   name, // ex.: "categoryNames" ou "tagNames"
   placeholder,
-  defaultValues = []
+  defaultValues = [],
+  disabled
 }: {
   label: string
   name: string
   placeholder?: string
   defaultValues?: string[]
+  disabled?: boolean
 }) {
   const [items, setItems] = useState<string[]>(defaultValues)
   const [text, setText] = useState('')
@@ -64,6 +66,7 @@ export function ChipsInput({
               className="ml-1 opacity-70 hover:opacity-100"
               onClick={() => setItems(items.filter((i) => i !== v))}
               aria-label={`Remover ${v}`}
+              disabled
             >
               ×
             </button>
