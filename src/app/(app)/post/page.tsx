@@ -3,26 +3,10 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu'
-import { Plus, MoreVertical, Edit, Trash2, Eye } from 'lucide-react'
+
+import { Plus } from 'lucide-react'
 import { PageHeader } from '@/components/page-header'
 import { StatCard } from '@/components/stats-card'
-import { SearchBar } from '@/components/search-bar'
 import { DeleteDialog } from '@/components/delete-dialog'
 
 const initialPosts = [
@@ -90,7 +74,7 @@ export default function BlogManagement() {
         title="Gerenciar Blog"
         description="Gerencie todos os posts do blog"
         action={
-          <Link href="/blog/post/create">
+          <Link href="/post/create">
             <Button className="gap-2">
               <Plus className="h-4 w-4" />
               Novo Post

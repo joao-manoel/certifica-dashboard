@@ -1,8 +1,4 @@
-import {
-  type MiddlewareConfig,
-  type NextRequest,
-  NextResponse
-} from 'next/server'
+import { type ProxyConfig, type NextRequest, NextResponse } from 'next/server'
 
 const publicRoutes = [
   { path: '/sign-in', whenAuthenticated: 'redirect' }
@@ -60,7 +56,7 @@ function getJwtExpSeconds(token: string): number | null {
   }
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname
   const publicRoute = publicRoutes.find((route) => route.path === path)
   const authCookie = request.cookies.get('token')
@@ -102,7 +98,7 @@ export function middleware(request: NextRequest) {
   return NextResponse.next()
 }
 
-export const config: MiddlewareConfig = {
+export const config: ProxyConfig = {
   matcher: [
     '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|_next/data/).*)',
     '/hiscores/:mode/:skill*'
