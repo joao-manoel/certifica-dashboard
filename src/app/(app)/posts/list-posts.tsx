@@ -9,7 +9,9 @@ import {
   X,
   Loader2,
   LayoutGrid,
-  Table as TableIcon
+  Table as TableIcon,
+  ArrowUpRightIcon,
+  FileText
 } from 'lucide-react'
 
 import { Input } from '@/components/ui/input'
@@ -39,6 +41,14 @@ import { listPosts } from '@/http/list-posts'
 import { searchPosts } from '@/http/search-posts'
 import type { PostListItem } from '@/@types/types-posts'
 import SkeletonPostTable from './skeleton-posts-table'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle
+} from '@/components/ui/empty'
 
 function useDebounced<T>(value: T, delay = 500) {
   const [debounced, setDebounced] = useState(value)
@@ -236,7 +246,25 @@ export function PostsList() {
         </p>
       ) : (items ?? []).length === 0 ? (
         <div className="rounded-md border p-10 text-center text-sm text-muted-foreground">
-          Nenhum post encontrado.
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <FileText />
+              </EmptyMedia>
+              <EmptyTitle>Nenhuma publicação</EmptyTitle>
+              <EmptyDescription>
+                Você ainda não criou nenhuma publicação. Comece criando sua
+                primeira publicação.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <div className="flex gap-2">
+                <Button asChild>
+                  <Link href="/posts/create">Criar Publicação</Link>
+                </Button>
+              </div>
+            </EmptyContent>
+          </Empty>
         </div>
       ) : view === 'table' ? (
         <div className="rounded-md border overflow-hidden">
