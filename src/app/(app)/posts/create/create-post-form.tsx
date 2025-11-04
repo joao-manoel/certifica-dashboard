@@ -114,7 +114,12 @@ export function CreatePostForm() {
     <form onSubmit={onSubmit} className="space-y-6" aria-live="polite">
       <div className="flex items-center gap-4">
         <Link href="/posts">
-          <Button type="button" variant="ghost" size="icon">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="cursor-pointer"
+          >
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </Link>
@@ -365,7 +370,15 @@ export function CreatePostForm() {
                       </strong>
                     </span>
                   </div>
-                  <div>
+                  <div className="flex gap-2">
+                    {readabilityScore < 74 && (
+                      <a
+                        href="#readability-panel"
+                        className="text-xs text-primary underline"
+                      >
+                        Ver detalhes
+                      </a>
+                    )}
                     {readabilityScore < 30
                       ? badIcon
                       : readabilityScore < 75

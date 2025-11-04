@@ -223,7 +223,7 @@ export function PostsList() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
               <Card key={`sk-card-${i}`} className="overflow-hidden">
-                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-32 w-full bg-zinc-300" />
                 <CardHeader className="space-y-2">
                   <Skeleton className="h-5 w-3/4" />
                   <Skeleton className="h-3 w-1/2" />

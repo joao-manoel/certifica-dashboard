@@ -1,11 +1,11 @@
 'use client'
 
-import { useRef, useCallback, useState, useEffect } from 'react'
+import { useRef, useCallback, useState, useEffect, useMemo } from 'react'
 import { useFormState } from '@/hooks/use-form-state'
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, CheckCircle2, XCircle } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,6 +26,10 @@ import type { Editor as TinyMCEEditor } from 'tinymce'
 import { CoverPickerDialog } from '@/app/(app)/posts/create/cover-picker-dialog'
 import { editPostAction } from '@/actions/edit-post-action'
 
+// 👇 painel de legibilidade (mesmo do create)
+import { ReadabilityPanel } from '@/components/readability-panel'
+import { computeReadability, DEFAULT_TARGETS } from '@/utils/readability-utils'
+
 type PostStatus = 'DRAFT' | 'SCHEDULED' | 'PUBLISHED'
 type Visibility = 'PUBLIC' | 'UNLISTED' | 'PRIVATE'
 
@@ -36,32 +40,27 @@ type EditPostFormProps = {
     id: string
     title: string
     excerpt: string | null
-    content: unknown // { format: 'html', html: string, version: number } | outro formato seu
+    content: unknown
     coverId: string | null
     coverUrl?: string | null
     status: PostStatus
     visibility: Visibility
-    scheduledFor: string | null // ISO
+    scheduledFor: string | null
     categories?: { name: string }[]
     tags?: { name: string }[]
   }
 }
 
 function isoToDatetimeLocal(iso: string) {
-  // transforma "2025-11-03T21:10:00.000Z" em "2025-11-03T18:10" (ajustado ao fuso do browser)
   const d = new Date(iso)
   const pad = (n: number) => String(n).padStart(2, '0')
-  const year = d.getFullYear()
-  const month = pad(d.getMonth() + 1)
-  const day = pad(d.getDate())
-  const hours = pad(d.getHours())
-  const minutes = pad(d.getMinutes())
-  return `${year}-${month}-${day}T${hours}:${minutes}`
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
+    d.getHours()
+  )}:${pad(d.getMinutes())}`
 }
 
 export function EditPostForm({ post }: EditPostFormProps) {
   const router = useRouter()
-
   const [{ success, message, errors }, handleSubmit, isPending] = useFormState(
     editPostAction.bind(null, post.id)
   )
@@ -77,23 +76,57 @@ export function EditPostForm({ post }: EditPostFormProps) {
     ''
 
   const [status, setStatus] = useState<PostStatus>(post.status)
+
+  // ▶ estados para capa/categorias/tags
   const [cover, setCover] = useState<Cover | null>(
     post.coverId && post.coverUrl
       ? { id: post.coverId, url: post.coverUrl }
       : null
   )
+  const [categories, setCategories] = useState<string[]>(
+    post.categories?.map((c) => c.name) ?? []
+  )
+  const [tags, setTags] = useState<string[]>(
+    post.tags?.map((t) => t.name) ?? []
+  )
+
+  const okIcon = <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+  const warnIcon = <AlertTriangle className="h-4 w-4 text-amber-500" />
+  const badIcon = <XCircle className="h-4 w-4 text-red-500" />
+
+  // ▶ estados usados na legibilidade
+  const [title, setTitle] = useState(post.title ?? '')
+  const [excerpt, setExcerpt] = useState(post.excerpt ?? '')
+  const [html, setHtml] = useState(initialHtml)
+
+  // 🔢 score compacto igual ao do create/painel
+  const readabilityScore = useMemo(() => {
+    return computeReadability(html, title, excerpt, DEFAULT_TARGETS).score
+  }, [html, title, excerpt])
+
+  const dot = (ok: boolean, warn = false) =>
+    ok ? 'bg-emerald-500' : warn ? 'bg-amber-500' : 'bg-red-500'
+
+  const legDotClass =
+    readabilityScore < 30
+      ? 'bg-red-500'
+      : readabilityScore < 75
+      ? 'bg-amber-500'
+      : 'bg-emerald-500'
 
   // Redireciona após sucesso
   useEffect(() => {
-    if (success) {
-      router.push('/posts')
-    }
+    if (success) router.push('/posts')
   }, [success, router])
 
   const onSubmit = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
-      const html = editorRef.current?.getContent({ format: 'html' }) ?? ''
-      const asJson = JSON.stringify({ format: 'html', html, version: 1 })
+      const htmlNow = editorRef.current?.getContent({ format: 'html' }) ?? ''
+      const asJson = JSON.stringify({
+        format: 'html',
+        html: htmlNow,
+        version: 1
+      })
 
       if (contentInputRef.current) {
         contentInputRef.current.value = asJson
@@ -106,7 +139,6 @@ export function EditPostForm({ post }: EditPostFormProps) {
         contentInputRef.current = hidden
       }
 
-      // envia coverId (opcional)
       if (cover?.id) {
         const hidden = document.createElement('input')
         hidden.type = 'hidden'
@@ -148,6 +180,7 @@ export function EditPostForm({ post }: EditPostFormProps) {
                   id="title"
                   name="title"
                   defaultValue={post.title}
+                  onChange={(e) => setTitle(e.target.value)}
                   required
                   disabled={isPending}
                 />
@@ -159,9 +192,10 @@ export function EditPostForm({ post }: EditPostFormProps) {
                   id="excerpt"
                   name="excerpt"
                   maxLength={300}
+                  defaultValue={post.excerpt ?? ''}
+                  onChange={(e) => setExcerpt(e.target.value)}
                   required
                   disabled={isPending}
-                  defaultValue={post.excerpt ?? ''}
                 />
                 <p className="text-xs text-muted-foreground">
                   Máx. 300 caracteres.
@@ -178,6 +212,7 @@ export function EditPostForm({ post }: EditPostFormProps) {
                   onInit={(_, editor) => {
                     editorRef.current = editor
                   }}
+                  onEditorChange={setHtml}
                   init={{
                     height: 520,
                     menubar: false,
@@ -214,6 +249,11 @@ export function EditPostForm({ post }: EditPostFormProps) {
                   }}
                   initialValue={initialHtml}
                 />
+              </div>
+
+              {/* 🔎 Painel de Legibilidade (mesmo do create) */}
+              <div id="readability-panel">
+                <ReadabilityPanel title={title} excerpt={excerpt} html={html} />
               </div>
             </CardContent>
           </Card>
@@ -329,28 +369,121 @@ export function EditPostForm({ post }: EditPostFormProps) {
                     </Button>
                   )}
                 </div>
-
-                {/* hidden coverId é adicionado no submit, se houver */}
               </div>
 
-              {/* Se seu ChipsInput aceitar valores iniciais, use as props adequadas.
-                 Aqui usamos o mesmo padrão do create (sem valor inicial controlado). */}
+              {/* Chips com onChange para contagem/indicadores */}
               <ChipsInput
                 label="Categorias"
                 name="categoryNames"
                 defaultValues={post.categories?.map((c) => c.name) ?? []}
+                disabled={isPending}
+                onChange={(vals) => setCategories(vals)}
               />
 
               <ChipsInput
                 label="Tags"
                 name="tagNames"
                 defaultValues={post.tags?.map((t) => t.name) ?? []}
+                disabled={isPending}
+                onChange={(vals) => setTags(vals)}
               />
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="pt-6 space-y-3">
+              {/* Resumo compacto / checklist */}
+              <div className="space-y-2 rounded-md border p-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm flex items-center gap-2">
+                    <span
+                      className={`inline-block h-2.5 w-2.5 rounded-full ${legDotClass}`}
+                    />
+                    <span className="text-muted-foreground">
+                      Legibilidade{' '}
+                      <strong className="text-foreground">
+                        {readabilityScore}%
+                      </strong>
+                    </span>
+                  </span>
+                  <div className="flex gap-2">
+                    {readabilityScore < 74 && (
+                      <a
+                        href="#readability-panel"
+                        className="text-xs text-primary underline"
+                      >
+                        Ver detalhes
+                      </a>
+                    )}
+                    {readabilityScore < 30
+                      ? badIcon
+                      : readabilityScore < 75
+                      ? warnIcon
+                      : okIcon}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span
+                      className={`inline-block h-2.5 w-2.5 rounded-full ${
+                        cover ? 'bg-emerald-500' : 'bg-red-500'
+                      }`}
+                    />
+                    <span className="text-muted-foreground">
+                      {cover ? (
+                        <>Capa selecionada</>
+                      ) : (
+                        <span className="text-foreground">
+                          Selecione uma capa
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                  <div>{cover ? okIcon : badIcon}</div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span
+                      className={`inline-block h-2.5 w-2.5 rounded-full ${
+                        categories.length > 0 ? 'bg-emerald-500' : 'bg-red-500'
+                      }`}
+                    />
+                    <span className="text-muted-foreground">
+                      {categories.length > 0 ? (
+                        <>Categoria definida</>
+                      ) : (
+                        <span className="text-foreground">
+                          Adicione ao menos 1 categoria
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                  <div>{categories.length > 0 ? okIcon : badIcon}</div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span
+                      className={`inline-block h-2.5 w-2.5 rounded-full ${
+                        tags.length > 0 ? 'bg-emerald-500' : 'bg-red-500'
+                      }`}
+                    />
+                    <span className="text-muted-foreground">
+                      {tags.length > 0 ? (
+                        <>Tags definidas</>
+                      ) : (
+                        <span className="text-foreground">
+                          Adicione ao menos 1 tag
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                  <div>{tags.length > 0 ? okIcon : badIcon}</div>
+                </div>
+              </div>
+
               {message && (
                 <p
                   className={`text-sm text-center ${
