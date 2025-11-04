@@ -36,7 +36,7 @@ const menuItems: MenuItem[] = [
     icon: <LayoutDashboard className="size-5 text-gray-400" />
   },
   {
-    label: 'Posts',
+    label: 'Publicações',
     icon: <FileText className="size-5 text-gray-400" />,
     href: '/posts'
   },

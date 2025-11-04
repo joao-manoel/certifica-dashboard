@@ -48,6 +48,8 @@ import {
   EmptyMedia,
   EmptyTitle
 } from '@/components/ui/empty'
+import StatusBadge from '@/components/status-badge'
+import VisibilityBadge from '@/components/visibility-badge'
 
 function useDebounced<T>(value: T, delay = 500) {
   const [debounced, setDebounced] = useState(value)
@@ -224,7 +226,7 @@ export function PostsList() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
               <Card key={`sk-card-${i}`} className="overflow-hidden">
-                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-32 w-full bg-zinc-300" />
                 <CardHeader className="space-y-2">
                   <Skeleton className="h-5 w-3/4" />
                   <Skeleton className="h-3 w-1/2" />
@@ -279,10 +281,7 @@ export function PostsList() {
                 <TableHead className="hidden md:table-cell">
                   Visibilidade
                 </TableHead>
-                <TableHead className="hidden lg:table-cell">
-                  Categorias
-                </TableHead>
-                <TableHead className="hidden lg:table-cell">Tags</TableHead>
+                <TableHead className="hidden lg:table-cell">Autor</TableHead>
                 <TableHead className="hidden sm:table-cell">
                   Publicado
                 </TableHead>
@@ -312,68 +311,55 @@ export function PostsList() {
                           <div className="h-10 w-16 rounded border bg-muted" />
                         )}
                         <div className="flex flex-col">
-                          <span className="font-medium line-clamp-1">
+                          <h1 className="font-medium line-clamp-1">
                             {p.title}
-                          </span>
+                          </h1>
+                          <div className="flex gap-2">
+                            <span>
+                              {categories.length
+                                ? categories.map((c) => (
+                                    <Badge
+                                      key={c.id}
+                                      variant="outline"
+                                      className="text-[10px]"
+                                    >
+                                      {c.name}
+                                    </Badge>
+                                  ))
+                                : ''}
+                            </span>
+                            <span>
+                              <Badge variant="outline" className="text-[10px]">
+                                #tag
+                              </Badge>
+                              {tags.length
+                                ? tags.map((t) => (
+                                    <Badge
+                                      key={t.id}
+                                      variant="outline"
+                                      className="text-[10px]"
+                                    >
+                                      #{t.name}
+                                    </Badge>
+                                  ))
+                                : ''}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </TableCell>
 
                     <TableCell className="hidden md:table-cell">
-                      <Badge
-                        variant={
-                          p.status === 'PUBLISHED'
-                            ? 'default'
-                            : p.status === 'DRAFT'
-                            ? 'secondary'
-                            : 'outline'
-                        }
-                      >
-                        {p.status}
-                      </Badge>
+                      <StatusBadge status={p.status} />
                     </TableCell>
 
                     <TableCell className="hidden md:table-cell">
-                      <span className="text-xs">{p.visibility}</span>
+                      <VisibilityBadge visibility={p.visibility} />
                     </TableCell>
 
                     <TableCell className="hidden lg:table-cell">
                       <div className="flex flex-wrap gap-1">
-                        {categories.length ? (
-                          categories.map((c) => (
-                            <Badge
-                              key={c.id}
-                              variant="outline"
-                              className="text-[10px]"
-                            >
-                              {c.name}
-                            </Badge>
-                          ))
-                        ) : (
-                          <span className="text-xs text-muted-foreground">
-                            —
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
-
-                    <TableCell className="hidden lg:table-cell">
-                      <div className="flex flex-wrap gap-1">
-                        {tags.length ? (
-                          tags.map((t) => (
-                            <Badge
-                              key={t.id}
-                              variant="outline"
-                              className="text-[10px]"
-                            >
-                              #{t.name}
-                            </Badge>
-                          ))
-                        ) : (
-                          <span className="text-xs text-muted-foreground">
-                            —
-                          </span>
-                        )}
+                        {p.author.name}
                       </div>
                     </TableCell>
 
@@ -392,8 +378,12 @@ export function PostsList() {
 
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Link href={`/posts/${p.id}`}>
-                          <Button size="sm" variant="outline">
+                        <Link href={`/posts/edit/${p.id}`}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="cursor-pointer"
+                          >
                             Editar
                           </Button>
                         </Link>
@@ -458,21 +448,8 @@ export function PostsList() {
 
                 <CardFooter className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
-                    <Badge
-                      variant={
-                        p.status === 'PUBLISHED'
-                          ? 'default'
-                          : p.status === 'DRAFT'
-                          ? 'secondary'
-                          : 'outline'
-                      }
-                      className="text-[10px]"
-                    >
-                      {p.status}
-                    </Badge>
-                    <span className="text-[10px] text-muted-foreground">
-                      {p.visibility}
-                    </span>
+                    <StatusBadge status={p.status} />
+                    <VisibilityBadge visibility={p.visibility} />
                     <span
                       className={cn(
                         'text-[10px]',
@@ -485,8 +462,12 @@ export function PostsList() {
                     </span>
                   </div>
 
-                  <Link href={`/posts/${p.id}`}>
-                    <Button size="sm" variant="outline">
+                  <Link href={`/posts/edit/${p.id}`}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="cursor-pointer"
+                    >
                       Editar
                     </Button>
                   </Link>
