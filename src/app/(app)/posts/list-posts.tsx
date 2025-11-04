@@ -11,7 +11,6 @@ import {
   LayoutGrid,
   Table as TableIcon,
   FileText,
-  Ear,
   Eye
 } from 'lucide-react'
 
@@ -284,7 +283,7 @@ export function PostsList() {
                 <TableHead className="hidden sm:table-cell">
                   Publicado
                 </TableHead>
-                <TableHead className="hidden lg:table-cell">
+                <TableHead className="hidden lg:table-cell text-center">
                   Visualizações
                 </TableHead>
                 <TableHead className="w-[120px] text-right">Ações</TableHead>
