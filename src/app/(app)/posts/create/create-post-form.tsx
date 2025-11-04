@@ -119,8 +119,10 @@ export function CreatePostForm() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">Novo Post</h1>
-          <p className="text-muted-foreground">Crie um novo post para o blog</p>
+          <h1 className="text-3xl font-bold">Nova Publicação</h1>
+          <p className="text-muted-foreground">
+            Crie uma nova publicação para o blog
+          </p>
         </div>
       </div>
 
@@ -145,7 +147,7 @@ export function CreatePostForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="excerpt">Resumo</Label>
+                <Label htmlFor="excerpt">Resumo(SEO)</Label>
                 <Textarea
                   id="excerpt"
                   name="excerpt"
@@ -173,7 +175,7 @@ export function CreatePostForm() {
                   onEditorChange={(content) => setHtml(content)}
                   init={{
                     height: 520,
-                    menubar: false,
+                    menubar: true,
                     plugins: [
                       'autolink',
                       'lists',
