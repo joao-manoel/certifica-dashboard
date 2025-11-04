@@ -454,17 +454,7 @@ export function CreatePostForm() {
                 </div>
               </div>
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={
-                  isPending ||
-                  readabilityScore < 30 ||
-                  !hasCover ||
-                  categories.length === 0 ||
-                  tags.length === 0
-                }
-              >
+              <Button type="submit" className="w-full" disabled={isPending}>
                 {isPending ? (
                   <>
                     <Loader2 className="animate-spin" />
