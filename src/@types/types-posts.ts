@@ -27,6 +27,7 @@ export interface PostListItem {
   excerpt: string | null
   status: PostStatus
   visibility: Visibility
+  views: number
   publishedAt: string | null
   scheduledFor: string | null
   wordCount: number

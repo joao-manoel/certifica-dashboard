@@ -10,7 +10,9 @@ import {
   Loader2,
   LayoutGrid,
   Table as TableIcon,
-  FileText
+  FileText,
+  Ear,
+  Eye
 } from 'lucide-react'
 
 import { Input } from '@/components/ui/input'
@@ -110,13 +112,9 @@ export function PostsList() {
     }
   })
 
-  console.log(data)
-
   const items = (data?.items ?? []) as PostListItem[]
   const total = data?.total ?? 0
   const totalPages = Math.max(1, Math.ceil(total / perPage))
-
-  console.log(items)
 
   // reset page quando a busca muda
   useEffect(() => {
@@ -281,9 +279,13 @@ export function PostsList() {
                 <TableHead className="hidden md:table-cell">
                   Visibilidade
                 </TableHead>
+
                 <TableHead className="hidden lg:table-cell">Autor</TableHead>
                 <TableHead className="hidden sm:table-cell">
                   Publicado
+                </TableHead>
+                <TableHead className="hidden lg:table-cell">
+                  Visualizações
                 </TableHead>
                 <TableHead className="w-[120px] text-right">Ações</TableHead>
               </TableRow>
@@ -315,7 +317,7 @@ export function PostsList() {
                             {p.title}
                           </h1>
                           <div className="flex gap-2">
-                            <span>
+                            <span className="flex gap-2">
                               {categories.length
                                 ? categories.map((c) => (
                                     <Badge
@@ -328,10 +330,7 @@ export function PostsList() {
                                   ))
                                 : ''}
                             </span>
-                            <span>
-                              <Badge variant="outline" className="text-[10px]">
-                                #tag
-                              </Badge>
+                            <span className="flex gap-2">
                               {tags.length
                                 ? tags.map((t) => (
                                     <Badge
@@ -374,6 +373,12 @@ export function PostsList() {
                           ? new Date(p.publishedAt).toLocaleDateString()
                           : '—'}
                       </span>
+                    </TableCell>
+
+                    <TableCell className="hidden lg:table-cell justify-center">
+                      <div className="flex flex-wrap gap-1 justify-center">
+                        {p.views}
+                      </div>
                     </TableCell>
 
                     <TableCell className="text-right">
@@ -460,6 +465,10 @@ export function PostsList() {
                         ? new Date(p.publishedAt).toLocaleDateString()
                         : '—'}
                     </span>
+                    <div className="flex gap-2 items-center">
+                      <Eye className="size-4" />
+                      {p.views}
+                    </div>
                   </div>
 
                   <Link href={`/posts/edit/${p.id}`}>
