@@ -162,13 +162,15 @@ export function EditPostForm({ post }: EditPostFormProps) {
     <form onSubmit={onSubmit} className="space-y-6" aria-live="polite">
       <div className="flex items-center gap-4">
         <Link href="/posts">
-          <Button type="button" variant="ghost" size="icon">
+          <Button type="button" variant="outline" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">Editar Post</h1>
-          <p className="text-muted-foreground">Atualize o conteúdo do post</p>
+          <h1 className="text-3xl font-bold">Editar Publicação</h1>
+          <p className="text-muted-foreground">
+            Atualize o conteúdo da publicação
+          </p>
         </div>
       </div>
 
@@ -193,7 +195,7 @@ export function EditPostForm({ post }: EditPostFormProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="excerpt">Resumo</Label>
+                <Label htmlFor="excerpt">Resumo(SEO)</Label>
                 <Textarea
                   id="excerpt"
                   name="excerpt"
@@ -221,7 +223,7 @@ export function EditPostForm({ post }: EditPostFormProps) {
                   onEditorChange={setHtml}
                   init={{
                     height: 520,
-                    menubar: false,
+                    menubar: true,
                     plugins: [
                       'autolink',
                       'lists',
