@@ -361,7 +361,7 @@ export function computeReadability(
       // informativos (não contam no score)
       {
         id: 'meta',
-        label: 'Título: 0 palavras · Resumo: 0 palavras',
+        label: 'Título: 0 palavras',
         status: 'ok'
       },
       { id: 'excerpt', label: 'Resumo: 0 palavras', status: 'bad' }
