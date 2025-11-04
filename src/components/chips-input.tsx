@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
@@ -14,33 +14,64 @@ function slugify(s: string) {
     .replace(/^-+|-+$/g, '')
 }
 
-export function ChipsInput({
-  label,
-  name, // ex.: "categoryNames" ou "tagNames"
-  placeholder,
-  defaultValues = [],
-  disabled
-}: {
+type ChipsInputProps = {
   label: string
   name: string
   placeholder?: string
   defaultValues?: string[]
   disabled?: boolean
-}) {
+  /** Dispara sempre que a lista de chips mudar (sem duplicatas, já normalizada) */
+  onChange?: (values: string[]) => void
+  /** Se true, adiciona o que ficou digitado ao sair do input */
+  addOnBlur?: boolean
+}
+
+export function ChipsInput({
+  label,
+  name,
+  placeholder,
+  defaultValues = [],
+  disabled,
+  onChange,
+  addOnBlur = true
+}: ChipsInputProps) {
   const [items, setItems] = useState<string[]>(defaultValues)
   const [text, setText] = useState('')
 
-  const add = (raw: string) => {
-    const candidates = raw
-      .split(/[,\n]/)
-      .map((s) => s.trim())
-      .filter(Boolean)
-    if (!candidates.length) return
-    const map = new Map(items.map((v) => [slugify(v), v]))
-    candidates.forEach((v) => map.set(slugify(v), v))
-    setItems(Array.from(map.values()))
-    setText('')
-  }
+  // Atualiza quando defaultValues mudar (ex.: tela de edição abrindo dados do servidor)
+  useEffect(() => {
+    setItems(defaultValues)
+  }, [defaultValues])
+
+  // Notifica o pai sempre que items mudar
+  useEffect(() => {
+    onChange?.(items)
+  }, [items, onChange])
+
+  const addMany = useCallback(
+    (raw: string) => {
+      const candidates = raw
+        .split(/[,\n]/)
+        .map((s) => s.trim())
+        .filter(Boolean)
+      if (!candidates.length) return
+
+      // evita duplicatas por slug
+      const map = new Map(items.map((v) => [slugify(v), v]))
+      for (const v of candidates) {
+        map.set(slugify(v), v)
+      }
+      setItems(Array.from(map.values()))
+      setText('')
+    },
+    [items]
+  )
+
+  const addOne = useCallback((value: string) => addMany(value), [addMany])
+
+  const remove = useCallback((v: string) => {
+    setItems((prev) => prev.filter((i) => i !== v))
+  }, [])
 
   const hiddenInputs = useMemo(
     () =>
@@ -53,6 +84,7 @@ export function ChipsInput({
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
+
       <div className="flex flex-wrap gap-2">
         {items.map((v) => (
           <Badge
@@ -64,9 +96,9 @@ export function ChipsInput({
             <button
               type="button"
               className="ml-1 opacity-70 hover:opacity-100"
-              onClick={() => setItems(items.filter((i) => i !== v))}
+              onClick={() => remove(v)}
               aria-label={`Remover ${v}`}
-              disabled
+              disabled={disabled}
             >
               ×
             </button>
@@ -80,13 +112,25 @@ export function ChipsInput({
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ',') {
             e.preventDefault()
-            add(text)
+            addOne(text)
+          }
+        }}
+        onBlur={() => {
+          if (addOnBlur && text.trim()) addOne(text)
+        }}
+        onPaste={(e) => {
+          // permite colar "foo, bar, baz" de uma vez
+          const pasted = e.clipboardData.getData('text')
+          if (pasted && pasted.match(/[,|\n]/)) {
+            e.preventDefault()
+            addMany(pasted)
           }
         }}
         placeholder={placeholder ?? 'Digite e pressione Enter'}
+        disabled={disabled}
       />
 
-      {/* hidden para FormData.getAll(name) */}
+      {/* hidden inputs para FormData.getAll(name) */}
       {hiddenInputs}
 
       <p className="text-xs text-muted-foreground">

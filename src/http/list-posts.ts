@@ -33,7 +33,7 @@ export async function listPosts(params: ListPostsParams = {}) {
   if (params.sort) searchParams.set('sort', params.sort)
 
   const qs = searchParams.toString()
-  const url = qs ? `blog/posts?${qs}` : 'blog/posts'
+  const url = qs ? `blog/admin/posts?${qs}` : 'blog/posts'
 
   const result = await api
     .get(url, {
