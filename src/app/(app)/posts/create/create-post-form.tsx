@@ -6,7 +6,13 @@ import { createPostAction } from '@/actions/create-post-action'
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react'
+import {
+  ArrowLeft,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  Loader2
+} from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -355,7 +361,7 @@ export function CreatePostForm() {
               )}
 
               {/* ✅ CHECKLIST compacto acima do botão */}
-              <div className="rounded-md border p-3 space-y-2">
+              <div className="rounded-md border p-3 space-y-2 mt-8">
                 {/* Legibilidade */}
 
                 <div className="flex items-center justify-between">
@@ -459,7 +465,14 @@ export function CreatePostForm() {
                   tags.length === 0
                 }
               >
-                {isPending ? 'Salvando...' : 'Salvar Post'}
+                {isPending ? (
+                  <>
+                    <Loader2 className="animate-spin" />
+                    <span>Salvando...</span>
+                  </>
+                ) : (
+                  'Salvar Publicação'
+                )}
               </Button>
             </CardContent>
           </Card>

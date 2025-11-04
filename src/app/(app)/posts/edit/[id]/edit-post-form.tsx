@@ -5,7 +5,13 @@ import { useFormState } from '@/hooks/use-form-state'
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { AlertTriangle, ArrowLeft, CheckCircle2, XCircle } from 'lucide-react'
+import {
+  AlertTriangle,
+  ArrowLeft,
+  CheckCircle2,
+  Loader2,
+  XCircle
+} from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -391,7 +397,7 @@ export function EditPostForm({ post }: EditPostFormProps) {
           </Card>
 
           <Card>
-            <CardContent className="pt-6 space-y-3">
+            <CardContent className=" pt-6 space-y-3">
               {/* Resumo compacto / checklist */}
               <div className="space-y-2 rounded-md border p-3">
                 <div className="flex items-center justify-between">
@@ -501,7 +507,14 @@ export function EditPostForm({ post }: EditPostFormProps) {
               )}
 
               <Button type="submit" className="w-full" disabled={isPending}>
-                {isPending ? 'Salvando...' : 'Salvar alterações'}
+                {isPending ? (
+                  <>
+                    <Loader2 className="animate-spin" />
+                    <span>Salvando...</span>
+                  </>
+                ) : (
+                  'Salvar alterações'
+                )}
               </Button>
             </CardContent>
           </Card>
