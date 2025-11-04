@@ -10,7 +10,6 @@ import {
   Loader2,
   LayoutGrid,
   Table as TableIcon,
-  ArrowUpRightIcon,
   FileText
 } from 'lucide-react'
 
@@ -109,9 +108,13 @@ export function PostsList() {
     }
   })
 
+  console.log(data)
+
   const items = (data?.items ?? []) as PostListItem[]
   const total = data?.total ?? 0
   const totalPages = Math.max(1, Math.ceil(total / perPage))
+
+  console.log(items)
 
   // reset page quando a busca muda
   useEffect(() => {
