@@ -7,3 +7,5 @@ export function formatYYYYMMDDToBR(s: string) {
   // exibe no fuso local do browser
   return dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
 }
+
+

@@ -1,6 +1,7 @@
 'use server'
 
 import { signInWithUsername } from '@/http/sign-in-with-username'
+import { env } from '@/lib/env'
 import { HTTPError } from 'ky'
 import { cookies } from 'next/headers'
 
@@ -46,8 +47,7 @@ export async function signInWithUsernameAction(data: FormData) {
       path: '/',
       maxAge: 60 * 60 * 24 * 1, // 7 days
       sameSite: 'lax', // Permite compartilhamento entre subdomínios
-      domain:
-        process.env.NODE_ENV === 'production' ? '.certifica.eng.br' : undefined // 🔥 Usa domínio apenas em produção
+      domain: env.NODE_ENV === 'production' ? '.certifica.eng.br' : undefined // 🔥 Usa domínio apenas em produção
     })
   } catch (err) {
     if (err instanceof HTTPError) {

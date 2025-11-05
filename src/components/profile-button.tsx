@@ -19,7 +19,21 @@ export default async function ProfileButton() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex items-center gap-3 outline-none mr-15">
-        <User className="size-5" />
+        <div className="flex gap-2">
+          <Avatar className="size-12">
+            <AvatarFallback className="bg-accent text-white font-medium">
+              {getInitials(user?.name || '')}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col justify-center">
+            <span className="text-sm font-bold text-black dark:text-white">
+              {user?.name}
+            </span>
+            <span className="text-xs font-thin text-muted-foreground">
+              @{user?.username}
+            </span>
+          </div>
+        </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
@@ -29,7 +43,7 @@ export default async function ProfileButton() {
           asChild
           className="flex cursor-pointer items-center justify-between p-4 transition-colors hover:bg-zinc-200 dark:hover:bg-black/10 focus:bg-transparent dark:focus:bg-black/10 focus:text-black"
         >
-          <Link href="/account">
+          <Link href="/#">
             <div className="flex gap-2">
               <Avatar className="size-12">
                 <AvatarFallback className="bg-accent text-white font-medium">
@@ -45,9 +59,10 @@ export default async function ProfileButton() {
                 </span>
               </div>
             </div>
+            {/*}
             <div className="rounded-sm p-2 hover:bg-green-900/20 hover:text-black transition-colors bg-green-950/10">
               <span>Ver Perfil</span>
-            </div>
+            </div>{*/}
           </Link>
         </DropdownMenuItem>
         <Separator />

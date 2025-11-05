@@ -49,13 +49,7 @@ export default function AdminDashboard() {
 
         const newStats: Stat[] = [
           {
-            name: 'Total de Posts Publicados',
-            value: String(res.totalPublished),
-            change: `${res.monthlyPublished.momDeltaPct.toFixed(1)}%`,
-            icon: FileText
-          },
-          {
-            name: 'Total de Posts Publicado Mensal',
+            name: 'Total de Posts Publicado',
             value: String(res.monthlyPublished.value),
             change: `${res.monthlyPublished.momDeltaPct.toFixed(1)}%`,
             icon: FileText

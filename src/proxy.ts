@@ -1,10 +1,11 @@
 import { type ProxyConfig, type NextRequest, NextResponse } from 'next/server'
+import { env } from './lib/env'
 
 const publicRoutes = [
   { path: '/sign-in', whenAuthenticated: 'redirect' }
 ] as const
 
-const REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE = `${process.env.NEXT_PUBLIC_BASE_URL}/sign-in`
+const REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE = `${env.NEXT_PUBLIC_BASE_URL}/sign-in`
 
 /**
  * Decodifica a parte Base64URL de um JWT.

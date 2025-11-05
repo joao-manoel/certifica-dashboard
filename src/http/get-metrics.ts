@@ -32,8 +32,10 @@ export interface TopPost {
   views: number
 }
 
+/**
+ * Métricas consolidadas do mês atual.
+ */
 export interface MetricsResponse {
-  totalPublished: number
   monthlyPublished: MonthlyMetric
   monthlyViews: MonthlyMetric
   growthRateMonthly: number

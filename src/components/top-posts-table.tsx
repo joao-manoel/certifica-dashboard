@@ -11,21 +11,28 @@ import {
   TableRow
 } from '@/components/ui/table'
 import { ArrowUpRight } from 'lucide-react'
+import { env } from '@/lib/env'
+import { useMemo } from 'react'
 
 type TopPost = { postId: string; title: string; slug: string; views: number }
 
 export function TopPostsTable({ items }: { items: TopPost[] }) {
+  const currentMonth = useMemo(() => {
+    return new Date().toLocaleString('pt-BR', { month: 'long' })
+  }, [])
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Top Posts (últimos 30 dias)</CardTitle>
+        <CardTitle>
+          Top Posts (
+          {currentMonth.charAt(0).toUpperCase() + currentMonth.slice(1)})
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Título</TableHead>
-              <TableHead>Slug</TableHead>
               <TableHead className="text-right">Views</TableHead>
               <TableHead className="w-14" />
             </TableRow>
@@ -44,15 +51,12 @@ export function TopPostsTable({ items }: { items: TopPost[] }) {
               items.map((p) => (
                 <TableRow key={p.postId}>
                   <TableCell className="font-medium">{p.title}</TableCell>
-                  <TableCell className="text-muted-foreground truncate">
-                    {p.slug}
-                  </TableCell>
                   <TableCell className="text-right tabular-nums">
                     {p.views}
                   </TableCell>
                   <TableCell className="text-right">
                     <Link
-                      href={`/blog/${p.slug}`}
+                      href={`${env.NEXT_PUBLIC_BLOG_URL}/${p.slug}`}
                       target="_blank"
                       className="inline-flex"
                     >

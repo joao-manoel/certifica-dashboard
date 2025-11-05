@@ -1,3 +1,4 @@
+import { env } from '@/lib/env'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -11,8 +12,7 @@ export async function GET(request: NextRequest) {
     path: '/',
     maxAge: 0,
     sameSite: 'lax',
-    domain:
-      process.env.NODE_ENV === 'production' ? '.certifica.eng.br' : undefined
+    domain: env.NODE_ENV === 'production' ? '.certifica.eng.br' : undefined
   })
 
   return NextResponse.redirect(redirectUrl)
