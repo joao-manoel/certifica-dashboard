@@ -6,8 +6,9 @@ import { StatCard } from '@/components/stats-card'
 import { getMetrics, type MetricsResponse } from '@/http/get-metrics'
 import { Card } from '@/components/ui/card'
 import { ViewsDailyChart } from './views-daily-chart'
-import { EngagementCards } from './engagement-cards'
+import { RadialEngagementCard } from './engagement-cards'
 import { TopPostsTable } from './top-posts-table'
+import { EngagementRadials } from './engagement'
 
 interface Stat {
   name: string
@@ -94,7 +95,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {stats.map((stat) => (
           <StatCard
             key={stat.name}
@@ -114,12 +115,12 @@ export default function AdminDashboard() {
       ) : metrics ? (
         <div className="space-y-6">
           <ViewsDailyChart data={metrics.viewsDaily} />
-          <EngagementCards
+          <TopPostsTable items={metrics.topPosts} />
+          <EngagementRadials
             devices={metrics.engagement.devices}
             browsers={metrics.engagement.browsers}
             os={metrics.engagement.os}
           />
-          <TopPostsTable items={metrics.topPosts} />
         </div>
       ) : (
         <Card className="h-40 grid place-content-center text-muted-foreground">
