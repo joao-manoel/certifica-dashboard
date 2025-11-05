@@ -6,27 +6,68 @@ import { createPost } from '@/http/create-post'
 const PostStatus = z.enum(['DRAFT', 'SCHEDULED', 'PUBLISHED'])
 const Visibility = z.enum(['PUBLIC', 'UNLISTED', 'PRIVATE'])
 
-const schema = z.object({
-  title: z.string().min(3).max(160),
-  excerpt: z.string().max(300),
-  content: z.string().transform((s) => {
-    // vem como string do input hidden
-    try {
-      return JSON.parse(s)
-    } catch {
-      return {}
+const schema = z
+  .object({
+    title: z.string().min(3).max(160),
+    excerpt: z.string().max(300),
+    content: z.string().transform((s) => {
+      try {
+        return JSON.parse(s)
+      } catch {
+        return {}
+      }
+    }),
+    coverId: z
+      .string()
+      .uuid()
+      .optional()
+      .transform((v) => (v?.trim() ? v : undefined)),
+    status: PostStatus,
+    visibility: Visibility,
+    // vem do hidden em ISO UTC quando status = SCHEDULED
+    scheduledFor: z.string().datetime().optional(),
+    categoryNames: z.array(z.string()).optional(),
+    tagNames: z.array(z.string()).optional()
+  })
+  .superRefine((data, ctx) => {
+    const { status, scheduledFor } = data
+
+    if (status === 'SCHEDULED') {
+      if (!scheduledFor) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['scheduledFor'],
+          message: "Posts agendados requerem 'scheduledFor'."
+        })
+        return
+      }
+      const when = new Date(scheduledFor)
+      if (Number.isNaN(when.getTime())) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['scheduledFor'],
+          message: "'scheduledFor' inválido."
+        })
+        return
+      }
+      if (when <= new Date()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['scheduledFor'],
+          message: "'scheduledFor' deve ser no futuro."
+        })
+      }
+    } else {
+      // DRAFT / PUBLISHED: não aceitar scheduledFor
+      if (scheduledFor) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['scheduledFor'],
+          message: "Não envie 'scheduledFor' quando o status não for SCHEDULED."
+        })
+      }
     }
-  }),
-  coverId: z
-    .string()
-    .uuid()
-    .optional()
-    .transform((v) => (v?.trim() ? v : undefined)),
-  status: PostStatus,
-  visibility: Visibility,
-  categoryNames: z.array(z.string()).optional(),
-  tagNames: z.array(z.string()).optional()
-})
+  })
 
 export async function createPostAction(formData: FormData) {
   const raw = {
@@ -36,6 +77,7 @@ export async function createPostAction(formData: FormData) {
     coverId: formData.get('coverId'),
     status: formData.get('status'),
     visibility: formData.get('visibility'),
+    scheduledFor: formData.get('scheduledFor') ?? undefined,
     categoryNames: formData.getAll('categoryNames'),
     tagNames: formData.getAll('tagNames')
   }
@@ -49,13 +91,13 @@ export async function createPostAction(formData: FormData) {
   const payload = parsed.data
 
   try {
-    const result = await createPost(payload)
+    const result = await createPost(payload) // já contém scheduledFor quando SCHEDULED
 
     return {
       success: true,
       message: 'Post criado com sucesso!',
       errors: null,
-      object: result // aqui você pode acessar id, slug, etc.
+      object: result
     }
   } catch (err: any) {
     console.error('Erro ao criar post', err)

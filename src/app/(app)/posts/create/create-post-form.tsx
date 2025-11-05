@@ -37,6 +37,18 @@ import { computeReadability, DEFAULT_TARGETS } from '@/utils/readability-utils'
 
 type Cover = { id: string; url: string }
 
+function localDatetimeToUtcIso(local: string): string | undefined {
+  if (!local?.trim()) return undefined
+  const [datePart, timePart] = local.split('T') ?? []
+  if (!datePart || !timePart) return undefined
+  const [y, m, d] = datePart.split('-').map(Number)
+  const [hh, mm] = timePart.split(':').map(Number)
+  const dt = new Date(y, (m ?? 1) - 1, d ?? 1, hh ?? 0, mm ?? 0, 0, 0) // local time
+  if (Number.isNaN(dt.getTime())) return undefined
+  dt.setSeconds(0, 0)
+  return dt.toISOString() // UTC ISO
+}
+
 export function CreatePostForm() {
   const router = useRouter()
 
@@ -55,11 +67,20 @@ export function CreatePostForm() {
   const [categories, setCategories] = useState<string[]>([])
   const [tags, setTags] = useState<string[]>([])
 
+  const [status, setStatus] = useState<'DRAFT' | 'SCHEDULED' | 'PUBLISHED'>(
+    'DRAFT'
+  )
+  const [visibility, setVisibility] = useState<
+    'PUBLIC' | 'UNLISTED' | 'PRIVATE'
+  >('PUBLIC')
+
+  // string no formato do input datetime-local: "YYYY-MM-DDThh:mm"
+  const [scheduledLocal, setScheduledLocal] = useState('')
+
   const readabilityScore = useMemo(() => {
     return computeReadability(html, title, excerpt, DEFAULT_TARGETS).score
   }, [html, title, excerpt])
 
-  // helpers de cor/ícone
   const readabilityDotClass =
     readabilityScore < 30
       ? 'bg-red-500'
@@ -111,9 +132,19 @@ export function CreatePostForm() {
         e.currentTarget.appendChild(hidden)
       }
 
+      // se for agendado, envia scheduledFor em UTC ISO
+      if (status === 'SCHEDULED') {
+        const scheduledIso = localDatetimeToUtcIso(scheduledLocal) ?? ''
+        const hidden = document.createElement('input')
+        hidden.type = 'hidden'
+        hidden.name = 'scheduledFor'
+        hidden.value = scheduledIso
+        e.currentTarget.appendChild(hidden)
+      }
+
       handleSubmit(e)
     },
-    [handleSubmit, cover]
+    [handleSubmit, cover, status, scheduledLocal]
   )
 
   return (
@@ -244,16 +275,39 @@ export function CreatePostForm() {
                     name="status"
                     defaultValue="DRAFT"
                     disabled={isPending}
+                    onValueChange={(v) => {
+                      setStatus(v as any)
+                      if (v !== 'SCHEDULED') setScheduledLocal('')
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="DRAFT">Rascunho</SelectItem>
+                      <SelectItem value="SCHEDULED">Agendado</SelectItem>
                       <SelectItem value="PUBLISHED">Publicado</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+
+                {status === 'SCHEDULED' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="scheduledFor">Agendar para</Label>
+                    <input
+                      id="scheduledFor"
+                      type="datetime-local"
+                      className="w-full rounded-md border px-3 py-2 text-sm"
+                      disabled={isPending}
+                      value={scheduledLocal}
+                      onChange={(e) => setScheduledLocal(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      O horário é interpretado no seu fuso local e enviado em
+                      UTC.
+                    </p>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label>Visibilidade</Label>
@@ -261,6 +315,7 @@ export function CreatePostForm() {
                     name="visibility"
                     defaultValue="PUBLIC"
                     disabled={isPending}
+                    onValueChange={(v) => setVisibility(v as any)}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -363,7 +418,6 @@ export function CreatePostForm() {
               {/* ✅ CHECKLIST compacto acima do botão */}
               <div className="rounded-md border p-3 space-y-2 mt-8">
                 {/* Legibilidade */}
-
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm">
                     <span
@@ -392,6 +446,45 @@ export function CreatePostForm() {
                       : okIcon}
                   </div>
                 </div>
+
+                {/* Agendamento */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span
+                      className={`inline-block h-2.5 w-2.5 rounded-full ${
+                        status !== 'SCHEDULED'
+                          ? 'bg-emerald-500'
+                          : scheduledLocal
+                          ? 'bg-emerald-500'
+                          : 'bg-red-500'
+                      }`}
+                    />
+                    <span className="text-muted-foreground">
+                      {status !== 'SCHEDULED' ? (
+                        <>Publicação imediata</>
+                      ) : scheduledLocal ? (
+                        <>
+                          Agendado para{' '}
+                          <span className="text-foreground">
+                            {scheduledLocal}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-foreground">
+                          Defina data e hora do agendamento
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                  <div>
+                    {status !== 'SCHEDULED'
+                      ? okIcon
+                      : scheduledLocal
+                      ? okIcon
+                      : badIcon}
+                  </div>
+                </div>
+
                 {/* Capa */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm">
@@ -412,6 +505,7 @@ export function CreatePostForm() {
                   </div>
                   <div>{hasCover ? okIcon : badIcon}</div>
                 </div>
+
                 {/* Categorias */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm">
@@ -432,6 +526,7 @@ export function CreatePostForm() {
                   </div>
                   <div>{categories.length > 0 ? okIcon : badIcon}</div>
                 </div>
+
                 {/* Tags */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm">

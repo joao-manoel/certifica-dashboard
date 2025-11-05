@@ -11,3 +11,15 @@ export function formatYYYYMMDDToBR(s: string) {
     timeZone: 'UTC' // 👈 chave do conserto
   })
 }
+export function localDatetimeToUtcIso(local: string): string | undefined {
+  if (!local?.trim()) return undefined
+  // cria Date interpretando como horário local
+  const [datePart, timePart] = local.split('T') ?? []
+  if (!datePart || !timePart) return undefined
+  const [y, m, d] = datePart.split('-').map(Number)
+  const [hh, mm] = timePart.split(':').map(Number)
+  const dt = new Date(y, (m ?? 1) - 1, d ?? 1, hh ?? 0, mm ?? 0, 0, 0) // local time
+  if (Number.isNaN(dt.getTime())) return undefined
+  dt.setSeconds(0, 0) // higieniza
+  return dt.toISOString() // UTC
+}

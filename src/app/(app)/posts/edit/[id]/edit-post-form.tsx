@@ -59,10 +59,24 @@ type EditPostFormProps = {
 
 function isoToDatetimeLocal(iso: string) {
   const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
     d.getHours()
   )}:${pad(d.getMinutes())}`
+}
+
+// converte "YYYY-MM-DDThh:mm" (local) -> ISO UTC
+function localDatetimeToUtcIso(local: string): string | undefined {
+  if (!local?.trim()) return undefined
+  const [datePart, timePart] = local.split('T') ?? []
+  if (!datePart || !timePart) return undefined
+  const [y, m, d] = datePart.split('-').map(Number)
+  const [hh, mm] = timePart.split(':').map(Number)
+  const dt = new Date(y, (m ?? 1) - 1, d ?? 1, hh ?? 0, mm ?? 0, 0, 0) // local time
+  if (Number.isNaN(dt.getTime())) return undefined
+  dt.setSeconds(0, 0)
+  return dt.toISOString()
 }
 
 export function EditPostForm({ post }: EditPostFormProps) {
@@ -82,6 +96,7 @@ export function EditPostForm({ post }: EditPostFormProps) {
     ''
 
   const [status, setStatus] = useState<PostStatus>(post.status)
+  const [visibility, setVisibility] = useState<Visibility>(post.visibility)
 
   // ▶ estados para capa/categorias/tags
   const [cover, setCover] = useState<Cover | null>(
@@ -96,22 +111,23 @@ export function EditPostForm({ post }: EditPostFormProps) {
     post.tags?.map((t) => t.name) ?? []
   )
 
-  const okIcon = <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-  const warnIcon = <AlertTriangle className="h-4 w-4 text-amber-500" />
-  const badIcon = <XCircle className="h-4 w-4 text-red-500" />
-
   // ▶ estados usados na legibilidade
   const [title, setTitle] = useState(post.title ?? '')
   const [excerpt, setExcerpt] = useState(post.excerpt ?? '')
   const [html, setHtml] = useState(initialHtml)
 
-  // 🔢 score compacto igual ao do create/painel
+  // ▶ agendamento (UI em datetime-local; envio em ISO UTC escondido)
+  const [scheduledLocal, setScheduledLocal] = useState<string>(
+    post.scheduledFor ? isoToDatetimeLocal(post.scheduledFor) : ''
+  )
+
   const readabilityScore = useMemo(() => {
     return computeReadability(html, title, excerpt, DEFAULT_TARGETS).score
   }, [html, title, excerpt])
 
-  const dot = (ok: boolean, warn = false) =>
-    ok ? 'bg-emerald-500' : warn ? 'bg-amber-500' : 'bg-red-500'
+  const okIcon = <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+  const warnIcon = <AlertTriangle className="h-4 w-4 text-amber-500" />
+  const badIcon = <XCircle className="h-4 w-4 text-red-500" />
 
   const legDotClass =
     readabilityScore < 30
@@ -153,9 +169,19 @@ export function EditPostForm({ post }: EditPostFormProps) {
         e.currentTarget.appendChild(hidden)
       }
 
+      // 👇 garante ISO UTC (e não envia nada se não for SCHEDULED)
+      if (status === 'SCHEDULED') {
+        const iso = localDatetimeToUtcIso(scheduledLocal) ?? ''
+        const hidden = document.createElement('input')
+        hidden.type = 'hidden'
+        hidden.name = 'scheduledFor'
+        hidden.value = iso
+        e.currentTarget.appendChild(hidden)
+      }
+
       handleSubmit(e)
     },
-    [handleSubmit, cover]
+    [handleSubmit, cover, status, scheduledLocal]
   )
 
   return (
@@ -281,15 +307,18 @@ export function EditPostForm({ post }: EditPostFormProps) {
                     name="status"
                     defaultValue={post.status}
                     disabled={isPending}
-                    onValueChange={(v) => setStatus(v as PostStatus)}
+                    onValueChange={(v) => {
+                      setStatus(v as PostStatus)
+                      if (v !== 'SCHEDULED') setScheduledLocal('')
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="DRAFT">Rascunho</SelectItem>
-                      <SelectItem value="PUBLISHED">Publicado</SelectItem>
                       <SelectItem value="SCHEDULED">Agendado</SelectItem>
+                      <SelectItem value="PUBLISHED">Publicado</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -299,17 +328,15 @@ export function EditPostForm({ post }: EditPostFormProps) {
                     <Label htmlFor="scheduledFor">Agendar para</Label>
                     <Input
                       id="scheduledFor"
-                      name="scheduledFor"
                       type="datetime-local"
-                      defaultValue={
-                        post.scheduledFor
-                          ? isoToDatetimeLocal(post.scheduledFor)
-                          : ''
-                      }
+                      className="w-full"
+                      value={scheduledLocal}
+                      onChange={(e) => setScheduledLocal(e.target.value)}
                       disabled={isPending}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Necessário quando o status for &quot;Agendado&quot;.
+                      O horário é interpretado no seu fuso local e enviado em
+                      UTC.
                     </p>
                   </div>
                 )}
@@ -320,6 +347,7 @@ export function EditPostForm({ post }: EditPostFormProps) {
                     name="visibility"
                     defaultValue={post.visibility}
                     disabled={isPending}
+                    onValueChange={(v) => {}}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -379,7 +407,7 @@ export function EditPostForm({ post }: EditPostFormProps) {
                 </div>
               </div>
 
-              {/* Chips com onChange para contagem/indicadores */}
+              {/* Chips */}
               <ChipsInput
                 label="Categorias"
                 name="categoryNames"
@@ -431,6 +459,45 @@ export function EditPostForm({ post }: EditPostFormProps) {
                   </div>
                 </div>
 
+                {/* Agendamento */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span
+                      className={`inline-block h-2.5 w-2.5 rounded-full ${
+                        status !== 'SCHEDULED'
+                          ? 'bg-emerald-500'
+                          : scheduledLocal
+                          ? 'bg-emerald-500'
+                          : 'bg-red-500'
+                      }`}
+                    />
+                    <span className="text-muted-foreground">
+                      {status !== 'SCHEDULED' ? (
+                        <>Publicação imediata</>
+                      ) : scheduledLocal ? (
+                        <>
+                          Agendado para{' '}
+                          <span className="text-foreground">
+                            {scheduledLocal}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-foreground">
+                          Defina data e hora do agendamento
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                  <div>
+                    {status !== 'SCHEDULED'
+                      ? okIcon
+                      : scheduledLocal
+                      ? okIcon
+                      : badIcon}
+                  </div>
+                </div>
+
+                {/* Capa */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm">
                     <span
@@ -451,6 +518,7 @@ export function EditPostForm({ post }: EditPostFormProps) {
                   <div>{cover ? okIcon : badIcon}</div>
                 </div>
 
+                {/* Categorias */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm">
                     <span
@@ -471,6 +539,7 @@ export function EditPostForm({ post }: EditPostFormProps) {
                   <div>{categories.length > 0 ? okIcon : badIcon}</div>
                 </div>
 
+                {/* Tags */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm">
                     <span
