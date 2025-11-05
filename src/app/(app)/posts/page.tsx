@@ -4,11 +4,13 @@ import { Plus } from 'lucide-react'
 import { PageHeader } from '@/components/page-header'
 import { StatCard } from '@/components/stats-card'
 import { PostsList } from './list-posts'
+import { getPostStats } from '@/http/get-post-stats'
 
 export default async function BlogManagementPage() {
-  const total = undefined
-  const published = undefined
-  const drafts = undefined
+  const blogStats = await getPostStats()
+  const total = blogStats.total
+  const published = blogStats.published
+  const drafts = blogStats.drafts
 
   return (
     <div className="space-y-6">
