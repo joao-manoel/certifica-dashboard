@@ -289,7 +289,7 @@ export const DEFAULT_TARGETS = {
   subheadingEvery: 300,
   subheadingWarn: 400,
   maxParagraphWords: 150,
-  maxSentenceWords: 20,
+  maxSentenceWords: 30,
   minShortSentencesShare: 0.75,
   minShortSentencesWarn: 0.6
 }
