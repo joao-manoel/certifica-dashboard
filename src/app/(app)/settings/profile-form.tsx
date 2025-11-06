@@ -69,6 +69,26 @@ export default function ProfileForm({ user }: GetProfileResponse) {
           )}
         </div>
       </div>
+      <div>
+        <label htmlFor="description" className="text-sm font-medium">
+          description
+        </label>
+        <textarea
+          id="description"
+          name="description"
+          defaultValue={user?.description || ''}
+          className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
+        {errors?.description ? (
+          <p className="text-xs font-medium text-red-500 dark:text-red-400 absolute">
+            {errors.description[0]}
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Usado para notificações e recuperação de conta.
+          </p>
+        )}
+      </div>
 
       <div className="space-y-2">
         <label htmlFor="email" className="text-sm font-medium">

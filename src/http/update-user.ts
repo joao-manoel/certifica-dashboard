@@ -1,4 +1,3 @@
-// src/http/update-user.ts
 import { api } from './api-client'
 
 export type Role = 'ADMIN' | 'USER' | 'EDITOR'
@@ -8,6 +7,7 @@ export type UpdateUserPayload = {
   username?: string
   email?: string
   role?: Role
+  description?: string | null
 }
 
 export type UpdateUserResponse = {
@@ -15,6 +15,7 @@ export type UpdateUserResponse = {
   username: string
   name: string | null
   email: string | null
+  description: string | null
   role: Role
   createdAt: string
   updatedAt: string

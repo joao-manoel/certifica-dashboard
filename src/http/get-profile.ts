@@ -6,6 +6,7 @@ export interface GetProfileResponse {
     username: string
     name: string
     email?: string | null
+    description?: string | null
     role: 'ADMIN' | 'USER' | 'EDITOR'
   }
 }

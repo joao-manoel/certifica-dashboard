@@ -2,7 +2,7 @@
 
 import { updateUser } from '@/http/update-user'
 import { HTTPError } from 'ky'
-import { revalidatePath, revalidateTag } from 'next/cache'
+import { revalidatePath } from 'next/cache'
 
 import { z } from 'zod'
 
@@ -19,6 +19,10 @@ const updateProfileSchema = z.object({
     .max(32, 'username deve ter no máximo 32 caracteres')
     .regex(/^[a-zA-Z0-9._-]+$/, 'username inválido')
     .optional(),
+  description: z
+    .string()
+    .max(160, 'Bio deve ter no máximo 160 caracteres')
+    .optional(),
   email: z.string().email().optional(),
   role: z.enum(['ADMIN', 'EDITOR', 'USER']).optional()
 })
@@ -31,14 +35,15 @@ export async function updateProfileAction(data: FormData) {
     return { success: false, message: null, errors }
   }
 
-  const { id, username, name, email, role } = result.data
+  const { id, username, name, email, role, description } = result.data
 
   try {
     const response = await updateUser(id, {
       username,
       email,
       name,
-      role
+      role,
+      description
     })
 
     if (!response) {

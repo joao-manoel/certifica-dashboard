@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { auth } from '@/auth/auth'
 import { getInitials } from '@/utils/format'
 
-import { Avatar, AvatarFallback } from './ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,20 +16,25 @@ import { Separator } from './ui/separator'
 export default async function ProfileButton() {
   const { user } = await auth()
 
+  const avatarUrl = `/api/users/avatar/${encodeURIComponent(
+    user?.username || ''
+  )}`
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex items-center gap-3 outline-none mr-15">
         <div className="flex gap-2">
           <Avatar className="size-12">
+            <AvatarImage src={avatarUrl} alt={`@${user?.username}`} />
             <AvatarFallback className="bg-accent text-white font-medium">
               {getInitials(user?.name || '')}
             </AvatarFallback>
           </Avatar>
-          <div className="flex flex-col justify-center">
+          <div className="flex flex-col ">
             <span className="text-sm font-bold text-black dark:text-white">
               {user?.name}
             </span>
-            <span className="text-xs font-thin text-muted-foreground">
+            <span className="text-xs font-thin text-muted-foreground text-start">
               @{user?.username}
             </span>
           </div>
@@ -46,6 +51,7 @@ export default async function ProfileButton() {
           <Link href="/#">
             <div className="flex gap-2">
               <Avatar className="size-12">
+                <AvatarImage src={avatarUrl} alt={`@${user?.username}`} />
                 <AvatarFallback className="bg-accent text-white font-medium">
                   {getInitials(user?.name || '')}
                 </AvatarFallback>
