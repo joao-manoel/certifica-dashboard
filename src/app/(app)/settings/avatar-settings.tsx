@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Loader2, Upload, ImagePlus, XCircle, CheckCircle2 } from 'lucide-react'
 import clsx from 'clsx'
 import { env } from '@/lib/env'
+import { getUserAvatarURL } from '@/utils/utils'
 
 type Props = {
   user: { name: string | null; username: string }
@@ -36,7 +37,7 @@ export default function AvatarSettings({ user, orientation = 'row' }: Props) {
 
   const buildAvatarUrl = useCallback(
     (v?: number | string) =>
-      `/api/users/avatar/${encodeURIComponent(user.username)}.jpg${
+      `${getUserAvatarURL(user.username)}${
         v ? `?v=${encodeURIComponent(String(v))}` : ''
       }`,
     [user.username]
