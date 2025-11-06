@@ -290,8 +290,8 @@ export const DEFAULT_TARGETS = {
   subheadingWarn: 400,
   maxParagraphWords: 150,
   maxSentenceWords: 30,
-  minShortSentencesShare: 0.75,
-  minShortSentencesWarn: 0.6
+  minShortSentencesShare: 0.7,
+  minShortSentencesWarn: 0.3
 }
 
 export type ReadabilityItem = {
@@ -350,7 +350,7 @@ export function computeReadability(
       },
       {
         id: 'sentences',
-        label: 'Tamanho das frases: 0% ≤ 20 palavras',
+        label: 'Tamanho das frases: 0% ≤ 30 palavras',
         status: 'bad'
       },
       {
