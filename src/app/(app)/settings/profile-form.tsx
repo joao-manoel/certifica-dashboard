@@ -71,7 +71,7 @@ export default function ProfileForm({ user }: GetProfileResponse) {
       </div>
       <div>
         <label htmlFor="description" className="text-sm font-medium">
-          description
+          BIO
         </label>
         <textarea
           id="description"
