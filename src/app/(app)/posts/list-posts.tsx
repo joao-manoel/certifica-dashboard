@@ -329,19 +329,6 @@ export function PostsList() {
                                   ))
                                 : ''}
                             </span>
-                            <span className="flex gap-2">
-                              {tags.length
-                                ? tags.map((t) => (
-                                    <Badge
-                                      key={t.id}
-                                      variant="outline"
-                                      className="text-[10px]"
-                                    >
-                                      #{t.name}
-                                    </Badge>
-                                  ))
-                                : ''}
-                            </span>
                           </div>
                         </div>
                       </div>
