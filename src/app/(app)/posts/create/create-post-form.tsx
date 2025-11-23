@@ -229,12 +229,7 @@ export function CreatePostForm() {
                       'searchreplace',
                       'visualblocks',
                       'wordcount',
-                      'emoticons',
-                      'checklist',
-                      'advtable',
-                      'advcode',
-                      'typography',
-                      'markdown'
+                      'emoticons'
                     ],
                     toolbar:
                       'undo redo | blocks | bold italic underline strikethrough | ' +
