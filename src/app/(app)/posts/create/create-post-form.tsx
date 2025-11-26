@@ -234,7 +234,7 @@ export function CreatePostForm() {
                     toolbar:
                       'undo redo | blocks | bold italic underline strikethrough | ' +
                       'alignleft aligncenter alignright alignjustify | ' +
-                      'bullist numlist checklist outdent indent | ' +
+                      'bullist numlist outdent indent | ' +
                       'link image table codesample | removeformat',
                     placeholder: 'Escreva seu texto…',
                     branding: false,
