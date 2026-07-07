@@ -85,8 +85,8 @@ export function CreatePostForm() {
     readabilityScore < 30
       ? 'bg-red-500'
       : readabilityScore < 75
-      ? 'bg-amber-500'
-      : 'bg-emerald-500'
+        ? 'bg-amber-500'
+        : 'bg-emerald-500'
 
   const okIcon = <CheckCircle2 className="h-4 w-4 text-emerald-500" />
   const warnIcon = <AlertTriangle className="h-4 w-4 text-amber-500" />
@@ -224,15 +224,19 @@ export function CreatePostForm() {
                       'link',
                       'image',
                       'table',
+                      'code',
                       'codesample',
-                      'charmap',
-                      'searchreplace',
+                      'preview',
+                      'fullscreen',
                       'visualblocks',
+                      'visualchars',
+                      'searchreplace',
+                      'charmap',
                       'wordcount',
                       'emoticons'
                     ],
                     toolbar:
-                      'undo redo | blocks | bold italic underline strikethrough | ' +
+                      'undo redo | code | blocks | bold italic underline strikethrough | ' +
                       'alignleft aligncenter alignright alignjustify | ' +
                       'bullist numlist outdent indent | ' +
                       'link image table codesample | removeformat',
@@ -437,8 +441,8 @@ export function CreatePostForm() {
                     {readabilityScore < 30
                       ? badIcon
                       : readabilityScore < 75
-                      ? warnIcon
-                      : okIcon}
+                        ? warnIcon
+                        : okIcon}
                   </div>
                 </div>
 
@@ -450,8 +454,8 @@ export function CreatePostForm() {
                         status !== 'SCHEDULED'
                           ? 'bg-emerald-500'
                           : scheduledLocal
-                          ? 'bg-emerald-500'
-                          : 'bg-red-500'
+                            ? 'bg-emerald-500'
+                            : 'bg-red-500'
                       }`}
                     />
                     <span className="text-muted-foreground">
@@ -475,8 +479,8 @@ export function CreatePostForm() {
                     {status !== 'SCHEDULED'
                       ? okIcon
                       : scheduledLocal
-                      ? okIcon
-                      : badIcon}
+                        ? okIcon
+                        : badIcon}
                   </div>
                 </div>
 
