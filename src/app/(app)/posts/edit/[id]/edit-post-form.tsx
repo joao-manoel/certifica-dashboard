@@ -133,8 +133,8 @@ export function EditPostForm({ post }: EditPostFormProps) {
     readabilityScore < 30
       ? 'bg-red-500'
       : readabilityScore < 75
-      ? 'bg-amber-500'
-      : 'bg-emerald-500'
+        ? 'bg-amber-500'
+        : 'bg-emerald-500'
 
   // Redireciona após sucesso
   useEffect(() => {
@@ -256,22 +256,21 @@ export function EditPostForm({ post }: EditPostFormProps) {
                       'link',
                       'image',
                       'table',
+                      'code',
                       'codesample',
-                      'charmap',
-                      'searchreplace',
+                      'preview',
+                      'fullscreen',
                       'visualblocks',
+                      'visualchars',
+                      'searchreplace',
+                      'charmap',
                       'wordcount',
-                      'emoticons',
-                      'checklist',
-                      'advtable',
-                      'advcode',
-                      'typography',
-                      'markdown'
+                      'emoticons'
                     ],
                     toolbar:
-                      'undo redo | blocks | bold italic underline strikethrough | ' +
+                      'undo redo | code | blocks | bold italic underline strikethrough | ' +
                       'alignleft aligncenter alignright alignjustify | ' +
-                      'bullist numlist checklist outdent indent | ' +
+                      'bullist numlist outdent indent | ' +
                       'link image table codesample | removeformat',
                     placeholder: 'Edite seu texto…',
                     branding: false,
@@ -454,8 +453,8 @@ export function EditPostForm({ post }: EditPostFormProps) {
                     {readabilityScore < 30
                       ? badIcon
                       : readabilityScore < 75
-                      ? warnIcon
-                      : okIcon}
+                        ? warnIcon
+                        : okIcon}
                   </div>
                 </div>
 
@@ -467,8 +466,8 @@ export function EditPostForm({ post }: EditPostFormProps) {
                         status !== 'SCHEDULED'
                           ? 'bg-emerald-500'
                           : scheduledLocal
-                          ? 'bg-emerald-500'
-                          : 'bg-red-500'
+                            ? 'bg-emerald-500'
+                            : 'bg-red-500'
                       }`}
                     />
                     <span className="text-muted-foreground">
@@ -492,8 +491,8 @@ export function EditPostForm({ post }: EditPostFormProps) {
                     {status !== 'SCHEDULED'
                       ? okIcon
                       : scheduledLocal
-                      ? okIcon
-                      : badIcon}
+                        ? okIcon
+                        : badIcon}
                   </div>
                 </div>
 
