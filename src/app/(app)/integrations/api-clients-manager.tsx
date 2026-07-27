@@ -53,6 +53,8 @@ import {
   TableRow
 } from '@/components/ui/table'
 
+import { McpInstallationGuide } from './mcp-installation-guide'
+
 const scopes: Array<{
   value: ApiClientScope
   label: string
@@ -109,9 +111,13 @@ function clientStatus(client: ApiClient) {
 }
 
 export default function ApiClientsManager({
-  initialItems
+  initialItems,
+  apiUrl,
+  apiKey
 }: {
   initialItems: ApiClient[]
+  apiUrl: string
+  apiKey: string
 }) {
   const router = useRouter()
   const [items, setItems] = useState(initialItems)
@@ -200,6 +206,8 @@ export default function ApiClientsManager({
           outro. Nunca envie tokens em conversas ou arquivos versionados.
         </AlertDescription>
       </Alert>
+
+      <McpInstallationGuide apiUrl={apiUrl} apiKey={apiKey} />
 
       <Card>
         <CardHeader>
