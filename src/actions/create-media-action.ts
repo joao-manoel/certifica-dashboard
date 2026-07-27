@@ -1,9 +1,10 @@
 // actions/create-media-action.ts
 'use server'
 
-import { z } from 'zod'
 import probe from 'probe-image-size'
 import sharp from 'sharp'
+import { z } from 'zod'
+
 import { createMedia } from '@/http/create-media'
 import { rgbToHex } from '@/utils/utils'
 
@@ -106,32 +107,11 @@ export async function createMediaFromUrlAction(
       dominantClr: dominantClr ?? undefined
     })
 
-    // 5) Normalizar tipos: undefined -> null, datas -> ISO string
-    const normalized = {
-      id: created.id,
-      url: created.url,
-      alt: (created as any).alt ?? null,
-      mimeType: (created as any).mimeType ?? null,
-      width: (created as any).width ?? null,
-      height: (created as any).height ?? null,
-      dominantClr: (created as any).dominantClr ?? null,
-      createdAt:
-        typeof (created as any).createdAt === 'string'
-          ? (created as any).createdAt
-          : (created as any).createdAt?.toISOString?.() ??
-            new Date().toISOString(),
-      updatedAt:
-        typeof (created as any).updatedAt === 'string'
-          ? (created as any).updatedAt
-          : (created as any).updatedAt?.toISOString?.() ??
-            new Date().toISOString()
-    }
-
     return {
       success: true,
       message: 'Imagem cadastrada com sucesso.',
       errors: null,
-      object: normalized
+      object: created
     }
   } catch (err) {
     console.error(err)

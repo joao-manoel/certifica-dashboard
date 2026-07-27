@@ -1,3 +1,5 @@
+import type { MediaItem } from '@/@types/types-media'
+
 import { api } from './api-client'
 
 export interface CreateMediaPayload {
@@ -9,22 +11,10 @@ export interface CreateMediaPayload {
   dominantClr?: string
 }
 
-export interface CreateMediaResponse {
-  id: string
-  url: string
-  alt?: string | null
-  mimeType?: string | null
-  width?: number | null
-  height?: number | null
-  dominantClr?: string | null
-  createdAt: string
-  updatedAt: string
-}
-
 export async function createMedia(data: CreateMediaPayload) {
   const result = await api
     .post('blog/media', { json: data })
-    .json<CreateMediaResponse>()
+    .json<MediaItem>()
 
   return result
 }

@@ -1,4 +1,8 @@
+import type { MediaItem } from '@/@types/types-media'
+
 import { api } from './api-client'
+
+export type { MediaItem } from '@/@types/types-media'
 
 export interface ListMediaParams {
   page?: number
@@ -8,18 +12,6 @@ export interface ListMediaParams {
   orderBy?: 'createdAt' | 'updatedAt'
   sort?: 'asc' | 'desc'
   ids?: string[]
-}
-
-export interface MediaItem {
-  id: string
-  url: string
-  alt?: string | null
-  mimeType?: string | null
-  width?: number | null
-  height?: number | null
-  dominantClr?: string | null
-  createdAt: string
-  updatedAt: string
 }
 
 export interface ListMediaResponse {
