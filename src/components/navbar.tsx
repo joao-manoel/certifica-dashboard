@@ -1,19 +1,18 @@
 'use client'
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { useState, useMemo, type JSX } from 'react'
 import {
+  ArrowUpRight,
+  BookOpenText,
   ChevronDown,
   FileText,
-  LayoutDashboard,
-  Users,
-  PlusCircle,
-  List,
   Globe,
-  ArrowUpRight,
-  BookOpenText
+  KeyRound,
+  LayoutDashboard
 } from 'lucide-react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { type JSX, useMemo, useState } from 'react'
+
 import { useMenu } from '@/context/menu-context'
 
 type SubItem = {
@@ -39,6 +38,11 @@ const menuItems: MenuItem[] = [
     label: 'Publicações',
     icon: <FileText className="size-5 text-gray-400" />,
     href: '/posts'
+  },
+  {
+    label: 'Integrações',
+    icon: <KeyRound className="size-5 text-gray-400" />,
+    href: '/integrations'
   }
 ]
 
