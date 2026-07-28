@@ -1,12 +1,16 @@
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
+import Link from 'next/link'
+
+import { auth } from '@/auth/auth'
 import { PageHeader } from '@/components/page-header'
 import { StatCard } from '@/components/stats-card'
-import { PostsList } from './list-posts'
+import { Button } from '@/components/ui/button'
 import { getPostStats } from '@/http/get-post-stats'
 
+import { PostsList } from './list-posts'
+
 export default async function BlogManagementPage() {
+  const { user } = await auth()
   const blogStats = await getPostStats()
   const total = blogStats.total
   const published = blogStats.published
@@ -34,7 +38,16 @@ export default async function BlogManagementPage() {
       </div>
 
       {/* Listagem com busca/paginação (client) */}
-      <PostsList />
+      <PostsList
+        currentUser={
+          user
+            ? {
+                id: user.id,
+                role: user.role
+              }
+            : null
+        }
+      />
     </div>
   )
 }

@@ -1,46 +1,28 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  Eye,
+  FileText,
+  LayoutGrid,
+  Loader2,
+  Search,
+  Table as TableIcon,
+  Trash2,
+  X,
+} from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useQuery } from '@tanstack/react-query'
-import {
-  Search,
-  X,
-  Loader2,
-  LayoutGrid,
-  Table as TableIcon,
-  FileText,
-  Eye
-} from 'lucide-react'
+import { useEffect, useMemo, useState, useTransition } from 'react'
+import { toast } from 'sonner'
 
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import {
-  Table,
-  TableHeader,
-  TableHead,
-  TableRow,
-  TableBody,
-  TableCell
-} from '@/components/ui/table'
+import type { PostListItem, Role } from '@/@types/types-posts'
+import { deletePostAction } from '@/actions/delete-post-action'
+import { DeleteDialog } from '@/components/delete-dialog'
+import StatusBadge from '@/components/status-badge'
 import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationNext,
-  PaginationPrevious,
-  PaginationLink
-} from '@/components/ui/pagination'
-
-import { listPosts } from '@/http/list-posts'
-import { searchPosts } from '@/http/search-posts'
-import type { PostListItem } from '@/@types/types-posts'
-import SkeletonPostTable from './skeleton-posts-table'
 import {
   Empty,
   EmptyContent,
@@ -49,8 +31,28 @@ import {
   EmptyMedia,
   EmptyTitle
 } from '@/components/ui/empty'
-import StatusBadge from '@/components/status-badge'
+import { Input } from '@/components/ui/input'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious} from '@/components/ui/pagination'
+import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow} from '@/components/ui/table'
 import VisibilityBadge from '@/components/visibility-badge'
+import { listPosts } from '@/http/list-posts'
+import { searchPosts } from '@/http/search-posts'
+import { cn } from '@/lib/utils'
+
+import SkeletonPostTable from './skeleton-posts-table'
 
 function useDebounced<T>(value: T, delay = 500) {
   const [debounced, setDebounced] = useState(value)
@@ -63,9 +65,16 @@ function useDebounced<T>(value: T, delay = 500) {
 
 type ViewMode = 'table' | 'cards'
 
-export function PostsList() {
+export function PostsList({
+  currentUser
+}: {
+  currentUser: { id: string; role: Role } | null
+}) {
   const router = useRouter()
   const params = useSearchParams()
+  const queryClient = useQueryClient()
+  const [postToDelete, setPostToDelete] = useState<PostListItem | null>(null)
+  const [isDeleting, startDeleting] = useTransition()
 
   // estado de URL / filtros
   const [page, setPage] = useState<number>(() => {
@@ -115,10 +124,32 @@ export function PostsList() {
   const total = data?.total ?? 0
   const totalPages = Math.max(1, Math.ceil(total / perPage))
 
-  // reset page quando a busca muda
-  useEffect(() => {
-    setPage(1)
-  }, [debouncedQ])
+  function canDelete(post: PostListItem) {
+    return (
+      currentUser?.role === 'ADMIN' ||
+      (currentUser?.role === 'EDITOR' && post.author.id === currentUser.id)
+    )
+  }
+
+  function handleDelete() {
+    if (!postToDelete) return
+
+    startDeleting(async () => {
+      const response = await deletePostAction(postToDelete.id)
+      if (!response.success) {
+        toast.error(response.message)
+        return
+      }
+
+      setPostToDelete(null)
+      if (items.length === 1 && page > 1) {
+        setPage((current) => current - 1)
+      }
+      await queryClient.invalidateQueries({ queryKey: ['posts'] })
+      router.refresh()
+      toast.success('Post excluído com sucesso.')
+    })
+  }
 
   return (
     <div className="space-y-5">
@@ -129,7 +160,10 @@ export function PostsList() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             value={q}
-            onChange={(e) => setQ(e.target.value)}
+            onChange={(event) => {
+              setQ(event.target.value)
+              setPage(1)
+            }}
             placeholder="Buscar por título, categoria ou tag…"
             className="pl-9 pr-20"
           />
@@ -142,7 +176,10 @@ export function PostsList() {
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7"
-                onClick={() => setQ('')}
+                onClick={() => {
+                  setQ('')
+                  setPage(1)
+                }}
                 title="Limpar busca"
               >
                 <X className="h-4 w-4" />
@@ -293,7 +330,6 @@ export function PostsList() {
             <TableBody>
               {items.map((p) => {
                 const categories = p.categories ?? []
-                const tags = p.tags ?? []
                 return (
                   <TableRow
                     key={p.id}
@@ -378,6 +414,19 @@ export function PostsList() {
                             Editar
                           </Button>
                         </Link>
+                        {canDelete(p) && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => setPostToDelete(p)}
+                            disabled={isDeleting}
+                            aria-label={`Excluir ${p.title}`}
+                          >
+                            <Trash2 />
+                            <span className="sr-only">Excluir</span>
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -457,15 +506,30 @@ export function PostsList() {
                     </div>
                   </div>
 
-                  <Link href={`/posts/edit/${p.id}`}>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="cursor-pointer"
-                    >
-                      Editar
-                    </Button>
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <Link href={`/posts/edit/${p.id}`}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="cursor-pointer"
+                      >
+                        Editar
+                      </Button>
+                    </Link>
+                    {canDelete(p) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => setPostToDelete(p)}
+                        disabled={isDeleting}
+                        aria-label={`Excluir ${p.title}`}
+                      >
+                        <Trash2 />
+                        <span className="sr-only">Excluir</span>
+                      </Button>
+                    )}
+                  </div>
                 </CardFooter>
               </Card>
             )
@@ -523,6 +587,18 @@ export function PostsList() {
           </div>
         </>
       )}
+
+      <DeleteDialog
+        open={postToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) setPostToDelete(null)
+        }}
+        onConfirm={handleDelete}
+        title="Excluir post"
+        description={`Tem certeza que deseja excluir “${postToDelete?.title ?? ''}”? O post será removido definitivamente do blog e esta ação não pode ser desfeita.`}
+        confirmLabel="Excluir post"
+        isPending={isDeleting}
+      />
     </div>
   )
 }

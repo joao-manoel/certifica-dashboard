@@ -1,5 +1,7 @@
 'use client'
 
+import { Loader2 } from 'lucide-react'
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,6 +20,7 @@ interface DeleteDialogProps {
   title?: string
   description?: string
   confirmLabel?: string
+  isPending?: boolean
 }
 
 export function DeleteDialog({
@@ -26,7 +29,8 @@ export function DeleteDialog({
   onConfirm,
   title = 'Confirmar exclusão',
   description = 'Tem certeza que deseja excluir este item? Esta ação não pode ser desfeita.',
-  confirmLabel = 'Excluir'
+  confirmLabel = 'Excluir',
+  isPending = false
 }: DeleteDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -36,9 +40,10 @@ export function DeleteDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>
-            {confirmLabel}
+          <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm} disabled={isPending}>
+            {isPending && <Loader2 className="animate-spin" />}
+            {isPending ? 'Excluindo…' : confirmLabel}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
