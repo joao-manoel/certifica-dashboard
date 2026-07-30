@@ -6,6 +6,7 @@ import {
   ChevronDown,
   FileText,
   Globe,
+  Images,
   KeyRound,
   LayoutDashboard
 } from 'lucide-react'
@@ -38,6 +39,11 @@ const menuItems: MenuItem[] = [
     label: 'Publicações',
     icon: <FileText className="size-5 text-gray-400" />,
     href: '/posts'
+  },
+  {
+    label: 'Mídia',
+    icon: <Images className="size-5 text-gray-400" />,
+    href: '/media'
   },
   {
     label: 'Integrações',

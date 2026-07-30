@@ -9,6 +9,7 @@ export interface ListMediaParams {
   perPage?: number
   q?: string
   mimeType?: string
+  source?: 'EXTERNAL' | 'S3'
   orderBy?: 'createdAt' | 'updatedAt'
   sort?: 'asc' | 'desc'
   ids?: string[]
@@ -31,6 +32,7 @@ export async function listMedia(params: ListMediaParams = {}) {
   if (params.perPage) search.set('perPage', String(params.perPage))
   if (params.q) search.set('q', params.q)
   if (params.mimeType) search.set('mimeType', params.mimeType)
+  if (params.source) search.set('source', params.source)
   if (params.orderBy) search.set('orderBy', params.orderBy)
   if (params.sort) search.set('sort', params.sort)
   if (params.ids) params.ids.forEach((id) => search.append('ids', id))
