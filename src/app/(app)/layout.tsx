@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation'
 
 import { isAuthenticated } from '@/auth/auth'
+import Header from '@/components/header'
 import NavBar from '@/components/navbar'
-import { ScrollArea } from '@/components/ui/scroll-area'
 
 export default async function DashboardLayout({
   children
@@ -12,20 +12,22 @@ export default async function DashboardLayout({
   }
 
   return (
-    // 1) trava scroll da página e define a altura útil (descontando o header de 81px)
-    <div className="h-[calc(100vh-81px)] overflow-hidden">
-      {/* 2) propaga altura e permite encolher (min-h-0) */}
-      <div className="flex h-full min-h-0">
+    <div className="min-h-dvh bg-muted/20">
+      <a
+        href="#main-content"
+        className="sr-only z-50 rounded-md bg-background px-4 py-2 text-sm font-medium shadow-md focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
+      >
+        Ir para o conteúdo principal
+      </a>
+      <Header />
+      <div className="flex min-h-[calc(100dvh-4rem)]">
         <NavBar />
-
-        {/* 3) área de conteúdo que pode encolher e rolar */}
-        <div className="flex-1 min-h-0">
-          <ScrollArea className="h-full w-full">
-            <div className="container-wrapper">
-              <div className="container p-4 m-auto mt-2">{children}</div>
-            </div>
-          </ScrollArea>
-        </div>
+        <main
+          id="main-content"
+          className="min-w-0 flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-7"
+        >
+          <div className="mx-auto w-full max-w-[1440px]">{children}</div>
+        </main>
       </div>
     </div>
   )

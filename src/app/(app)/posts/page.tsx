@@ -19,8 +19,8 @@ export default async function BlogManagementPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Gerenciar Blog"
-        description="Gerencie todas publicações do blog"
+        title="Publicações"
+        description="Crie, encontre e acompanhe o conteúdo publicado no blog."
         action={
           <Link href="/posts/create">
             <Button className="gap-2">

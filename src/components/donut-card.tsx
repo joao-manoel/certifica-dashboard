@@ -1,30 +1,23 @@
 'use client'
 
+import { Cell,Pie, PieChart } from 'recharts'
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
+  type ChartConfig,
   ChartContainer,
   ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig
-} from '@/components/ui/chart'
-import { PieChart, Pie, Cell } from 'recharts'
+  ChartTooltipContent} from '@/components/ui/chart'
 import { cn } from '@/lib/utils'
 
 type KV = { key: string | null; value: number }
 
 const COLORS = [
-  '#3b82f6',
-  '#10b981',
-  '#f59e0b',
-  '#ef4444',
-  '#8b5cf6',
-  '#0ea5e9',
-  '#14b8a6',
-  '#f472b6',
-  '#22c55e',
-  '#eab308',
-  '#a855f7',
-  '#f97316'
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)'
 ]
 const color = (i: number) => COLORS[i % COLORS.length]
 const label = (v: string | null) => (v && v.trim().length ? v : '—')
@@ -72,7 +65,7 @@ export function DonutCard({
                 innerRadius={innerRadius}
                 outerRadius={outerRadius}
                 paddingAngle={2}
-                stroke="#e5e7eb"
+                stroke="var(--border)"
                 strokeWidth={1}
                 isAnimationActive={false}
               >

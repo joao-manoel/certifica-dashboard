@@ -1,100 +1,94 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { FileText, Eye, TrendingUp } from 'lucide-react'
+import { Eye, FileText, type LucideIcon,TrendingUp } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+
+import { EngagementRadials } from '@/components/engagement'
+import { PageHeader } from '@/components/page-header'
+import { EmptyState, ErrorState, PageLoading } from '@/components/page-state'
 import { StatCard } from '@/components/stats-card'
 import { getMetrics, type MetricsResponse } from '@/http/get-metrics'
-import { Card } from '@/components/ui/card'
-import { ViewsDailyChart } from './views-daily-chart'
-import { RadialEngagementCard } from './engagement-cards'
+
 import { TopPostsTable } from './top-posts-table'
-import { EngagementRadials } from './engagement'
+import { ViewsDailyChart } from './views-daily-chart'
 
 interface Stat {
   name: string
   value: string
   change: string
-  icon: any
+  icon: LucideIcon
 }
 
-export default function AdminDashboard() {
-  const [stats, setStats] = useState<Stat[]>([
-    {
-      name: 'Total de Posts Publicados',
-      value: '0',
-      change: '0%',
-      icon: FileText
-    },
-    {
-      name: 'Total de Posts Publicado Mensal',
-      value: '0',
-      change: '0%',
-      icon: FileText
-    },
-    { name: 'Visualizações', value: '0', change: '+0%', icon: Eye },
-    {
-      name: 'Taxa de Crescimento',
-      value: '0%',
-      change: '+0%',
-      icon: TrendingUp
-    }
-  ])
+const initialStats: Stat[] = [
+  {
+    name: 'Posts publicados no mês',
+    value: '0',
+    change: '0%',
+    icon: FileText
+  },
+  { name: 'Visualizações no mês', value: '0', change: '0%', icon: Eye },
+  {
+    name: 'Taxa de crescimento',
+    value: '0%',
+    change: '0%',
+    icon: TrendingUp
+  }
+]
 
+export default function AdminDashboard() {
+  const [stats, setStats] = useState<Stat[]>(initialStats)
   const [metrics, setMetrics] = useState<MetricsResponse | null>(null)
   const [loading, setLoading] = useState(true)
+  const [hasError, setHasError] = useState(false)
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await getMetrics()
+  const loadMetrics = useCallback(async () => {
+    setLoading(true)
+    setHasError(false)
 
-        const newStats: Stat[] = [
-          {
-            name: 'Total de Posts Publicado',
-            value: String(res.monthlyPublished.value),
-            change: `${res.monthlyPublished.momDeltaPct.toFixed(1)}%`,
-            icon: FileText
-          },
-          {
-            name: 'Visualizações',
-            value: String(res.monthlyViews.value),
-            change: `${
-              res.monthlyViews.momDeltaPct >= 0 ? '+' : ''
-            }${res.monthlyViews.momDeltaPct.toFixed(1)}%`,
-            icon: Eye
-          },
-          {
-            name: 'Taxa de Crescimento',
-            value: `${res.growthRateMonthly.toFixed(1)}%`,
-            change: `${
-              res.growthRateMonthly >= 0 ? '+' : ''
-            }${res.growthRateMonthly.toFixed(1)}%`,
-            icon: TrendingUp
-          }
-        ]
+    try {
+      const response = await getMetrics()
+      const newStats: Stat[] = [
+        {
+          name: 'Posts publicados no mês',
+          value: String(response.monthlyPublished.value),
+          change: `${response.monthlyPublished.momDeltaPct.toFixed(1)}%`,
+          icon: FileText
+        },
+        {
+          name: 'Visualizações no mês',
+          value: String(response.monthlyViews.value),
+          change: `${response.monthlyViews.momDeltaPct >= 0 ? '+' : ''}${response.monthlyViews.momDeltaPct.toFixed(1)}%`,
+          icon: Eye
+        },
+        {
+          name: 'Taxa de crescimento',
+          value: `${response.growthRateMonthly.toFixed(1)}%`,
+          change: `${response.growthRateMonthly >= 0 ? '+' : ''}${response.growthRateMonthly.toFixed(1)}%`,
+          icon: TrendingUp
+        }
+      ]
 
-        setStats(newStats)
-        setMetrics(res)
-      } catch (err) {
-        console.error('Erro ao carregar métricas do dashboard:', err)
-      } finally {
-        setLoading(false)
-      }
+      setStats(newStats)
+      setMetrics(response)
+    } catch (error) {
+      console.error('Erro ao carregar métricas do dashboard:', error)
+      setHasError(true)
+    } finally {
+      setLoading(false)
     }
-    load()
   }, [])
 
-  return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Visão geral das métricas e atividades
-        </p>
-      </div>
+  useEffect(() => {
+    void loadMetrics()
+  }, [loadMetrics])
 
-      {/* Stats Grid */}
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="Dashboard"
+        description="Acompanhe o desempenho do conteúdo no período atual."
+      />
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {stats.map((stat) => (
           <StatCard
@@ -107,11 +101,10 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* Charts & tables */}
       {loading ? (
-        <Card className="h-40 grid place-content-center text-muted-foreground">
-          Carregando métricas…
-        </Card>
+        <PageLoading cards={3} />
+      ) : hasError ? (
+        <ErrorState onRetry={() => void loadMetrics()} />
       ) : metrics ? (
         <div className="space-y-6">
           <ViewsDailyChart data={metrics.viewsDaily} />
@@ -123,9 +116,10 @@ export default function AdminDashboard() {
           />
         </div>
       ) : (
-        <Card className="h-40 grid place-content-center text-muted-foreground">
-          Sem dados
-        </Card>
+        <EmptyState
+          title="Ainda não há métricas"
+          description="Os indicadores aparecerão quando o blog começar a registrar atividade."
+        />
       )}
     </div>
   )

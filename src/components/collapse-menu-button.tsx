@@ -1,9 +1,8 @@
 'use client'
-import Image from 'next/image'
+
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 
 import { useMenu } from '@/context/menu-context'
-import MenuLeftIcon from '@/assets/images/menu-left.svg'
-import MenuRightIcon from '@/assets/images/menu-right.svg'
 
 import { Button } from './ui/button'
 
@@ -12,13 +11,16 @@ export default function CollapseMenuButton() {
   return (
     <Button
       size="icon"
-      className={`bg-muted hover:bg-muted/60`}
+      variant="ghost"
+      className="hidden lg:inline-flex"
       onClick={() => setOpen(!isOpen)}
+      aria-label={isOpen ? 'Recolher menu lateral' : 'Expandir menu lateral'}
+      title={isOpen ? 'Recolher menu lateral' : 'Expandir menu lateral'}
     >
       {isOpen ? (
-        <Image src={MenuLeftIcon} alt="Collapse menu" width={16} height={16} />
+        <PanelLeftClose className="size-5" />
       ) : (
-        <Image src={MenuRightIcon} alt="Expand menu" width={16} height={16} />
+        <PanelLeftOpen className="size-5" />
       )}
     </Button>
   )

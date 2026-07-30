@@ -9,7 +9,7 @@
     "baseColor": "neutral",
     "cssVariables": true,
     "prefix": "",
-    "darkMode": false
+    "darkMode": true
   },
   "iconLibrary": "lucide",
   "aliases": {

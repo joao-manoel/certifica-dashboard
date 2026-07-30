@@ -1,17 +1,44 @@
-import PasswordSettingsCard from '@/app/(app)/settings/password-settings-card'
-import AvatarSettings from '@/app/(app)/settings/avatar-settings'
-import { getProfile } from '@/http/get-profile' // sua função de fetch no server (ou passe via props)
+import { LockKeyhole, Palette, UserRound } from 'lucide-react'
+
+import { PageHeader } from '@/components/page-header'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+
+import AppearanceSettingsCard from './appearance-settings-card'
+import PasswordSettingsCard from './password-settings-card'
 import ProfileSettingsCard from './profile-settings-card'
 
-// Se preferir Server Component pai:
 export default async function SettingsPage() {
-  // pegue o profile no server (sem presign) só pra ter name/username
-  const { user } = await getProfile() // ou via loader que você já tenha
-
   return (
-    <div className="flex flex-col gap-5">
-      <ProfileSettingsCard />
-      <PasswordSettingsCard />
+    <div className="space-y-6">
+      <PageHeader
+        title="Configurações"
+        description="Gerencie seu perfil, segurança e preferências visuais."
+      />
+      <Tabs defaultValue="profile" className="space-y-5">
+        <TabsList className="h-auto w-full justify-start overflow-x-auto p-1 sm:w-fit">
+          <TabsTrigger value="profile" className="gap-2">
+            <UserRound className="size-4" />
+            Perfil
+          </TabsTrigger>
+          <TabsTrigger value="security" className="gap-2">
+            <LockKeyhole className="size-4" />
+            Segurança
+          </TabsTrigger>
+          <TabsTrigger value="appearance" className="gap-2">
+            <Palette className="size-4" />
+            Aparência
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="profile">
+          <ProfileSettingsCard />
+        </TabsContent>
+        <TabsContent value="security">
+          <PasswordSettingsCard />
+        </TabsContent>
+        <TabsContent value="appearance">
+          <AppearanceSettingsCard />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

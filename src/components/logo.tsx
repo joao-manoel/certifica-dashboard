@@ -1,6 +1,6 @@
-'use client'
 import { Anton } from 'next/font/google'
 import Image from 'next/image'
+
 import LogoIcon from '@/assets/images/certifica-icon-verde.png'
 const _anton = Anton({ subsets: ['latin'], weight: '400' })
 
@@ -25,13 +25,13 @@ export default function Logo({ size = 'md' }: LogoProps) {
             size === 'lg'
               ? 'w-12 h-12'
               : size === 'md'
-              ? 'w-10 h-10'
-              : 'w-8 h-8'
+                ? 'w-10 h-10'
+                : 'w-8 h-8'
           }`}
           priority
         />
       </div>
-      <div className="flex flex-col leading-tight text-[#406054]">
+      <div className="flex flex-col leading-tight text-primary">
         <span
           className={`${
             size === 'lg' ? 'text-7xl' : size === 'md' ? 'text-4xl' : 'text-3xl'
@@ -44,8 +44,8 @@ export default function Logo({ size = 'md' }: LogoProps) {
             size === 'lg'
               ? 'text-[14px]'
               : size === 'md'
-              ? 'text-[10px]'
-              : 'text-[8px]'
+                ? 'text-[10px]'
+                : 'text-[8px]'
           }`}
         >
           Engenharia e Avaliações

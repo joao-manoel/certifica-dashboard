@@ -2,12 +2,11 @@
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
+import { signInWithUsernameAction } from '@/actions/sign-in-action'
 import { FloatingLabelInput } from '@/components/floating-label-input'
 import { Button } from '@/components/ui/button'
-
 import { useFormState } from '@/hooks/use-form-state'
 import { cn } from '@/lib/utils'
-import { signInWithUsernameAction } from '@/actions/sign-in-action'
 
 export default function SignInForm() {
   const router = useRouter()
@@ -26,9 +25,18 @@ export default function SignInForm() {
       <form onSubmit={handleSubmit}>
         <div className="flex flex-col gap-6">
           <div className="flex flex-col items-center gap-2">
-            <h1 className="text-xl font-bold">Fazer login</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Acessar o painel
+            </h1>
+            <p className="text-center text-sm text-muted-foreground">
+              Entre com suas credenciais para continuar.
+            </p>
           </div>
-          <div className="flex justify-center text-red-500 min-h-8 items-center">
+          <div
+            className="flex min-h-8 items-center justify-center text-sm text-destructive"
+            role="alert"
+            aria-live="polite"
+          >
             {message && message}
           </div>
           <div className="flex flex-col gap-6">
@@ -37,7 +45,8 @@ export default function SignInForm() {
                 id="username"
                 type="username"
                 name="username"
-                label="Username"
+                label="Usuário"
+                autoComplete="username"
               />
             </div>
             <div className="grid gap-2">
@@ -46,14 +55,11 @@ export default function SignInForm() {
                 type="password"
                 name="password"
                 label="Senha"
+                autoComplete="current-password"
               />
             </div>
-            <Button
-              type="submit"
-              className="w-full dark:bg-green-800 dark:text-white dark:hover:bg-green-800"
-              disabled={isPending}
-            >
-              Continuar
+            <Button type="submit" className="w-full" disabled={isPending}>
+              {isPending ? 'Entrando…' : 'Continuar'}
             </Button>
           </div>
         </div>

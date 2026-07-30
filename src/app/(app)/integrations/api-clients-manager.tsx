@@ -52,6 +52,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 import { McpInstallationGuide } from './mcp-installation-guide'
 
@@ -126,8 +127,9 @@ export default function ApiClientsManager({
   const [expiresInDays, setExpiresInDays] = useState<
     30 | 90 | 180 | 365 | null
   >(90)
-  const [createdClient, setCreatedClient] =
-    useState<CreatedApiClient | null>(null)
+  const [createdClient, setCreatedClient] = useState<CreatedApiClient | null>(
+    null
+  )
   const [copied, setCopied] = useState(false)
   const [clientToRevoke, setClientToRevoke] = useState<ApiClient | null>(null)
   const [isCreating, startCreating] = useTransition()
@@ -207,184 +209,201 @@ export default function ApiClientsManager({
         </AlertDescription>
       </Alert>
 
-      <McpInstallationGuide apiUrl={apiUrl} apiKey={apiKey} />
+      <Tabs defaultValue="tokens" className="space-y-5">
+        <TabsList className="h-auto w-full justify-start overflow-x-auto p-1 sm:w-fit">
+          <TabsTrigger value="tokens" className="gap-2">
+            <KeyRound className="size-4" />
+            Tokens de acesso
+          </TabsTrigger>
+          <TabsTrigger value="installation" className="gap-2">
+            <ShieldCheck className="size-4" />
+            Instalação do MCP
+          </TabsTrigger>
+        </TabsList>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Plus className="size-5" />
-            Novo token
-          </CardTitle>
-          <CardDescription>
-            O token será vinculado à sua conta e respeitará as permissões
-            selecionadas.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-5 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="integration-name">Nome da integração</Label>
-              <Input
-                id="integration-name"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder="Ex.: Claude do escritório"
-                maxLength={80}
-                disabled={isCreating}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="integration-expiration">Expiração</Label>
-              <select
-                id="integration-expiration"
-                className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-                value={expiresInDays ?? 'never'}
-                onChange={(event) =>
-                  setExpiresInDays(
-                    event.target.value === 'never'
-                      ? null
-                      : (Number(event.target.value) as 30 | 90 | 180 | 365)
-                  )
-                }
-                disabled={isCreating}
-              >
-                <option value={30}>30 dias</option>
-                <option value={90}>90 dias</option>
-                <option value={180}>180 dias</option>
-                <option value={365}>1 ano</option>
-                <option value="never">Sem expiração</option>
-              </select>
-            </div>
-          </div>
-
-          <fieldset className="space-y-3">
-            <legend className="text-sm font-medium">Permissões</legend>
-            <div className="grid gap-3 md:grid-cols-2">
-              {scopes.map((scope) => (
-                <label
-                  key={scope.value}
-                  className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 hover:bg-muted/50"
-                >
-                  <input
-                    type="checkbox"
-                    className="mt-1 size-4 accent-primary"
-                    checked={selectedScopes.includes(scope.value)}
-                    onChange={() => toggleScope(scope.value)}
+        <TabsContent value="tokens" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Plus className="size-5" />
+                Novo token
+              </CardTitle>
+              <CardDescription>
+                O token será vinculado à sua conta e respeitará as permissões
+                selecionadas.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid gap-5 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="integration-name">Nome da integração</Label>
+                  <Input
+                    id="integration-name"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    placeholder="Ex.: Claude do escritório"
+                    maxLength={80}
                     disabled={isCreating}
                   />
-                  <span>
-                    <span className="block text-sm font-medium">
-                      {scope.label}
-                    </span>
-                    <span className="block text-xs text-muted-foreground">
-                      {scope.description}
-                    </span>
-                  </span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="integration-expiration">Expiração</Label>
+                  <select
+                    id="integration-expiration"
+                    className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                    value={expiresInDays ?? 'never'}
+                    onChange={(event) =>
+                      setExpiresInDays(
+                        event.target.value === 'never'
+                          ? null
+                          : (Number(event.target.value) as 30 | 90 | 180 | 365)
+                      )
+                    }
+                    disabled={isCreating}
+                  >
+                    <option value={30}>30 dias</option>
+                    <option value={90}>90 dias</option>
+                    <option value={180}>180 dias</option>
+                    <option value={365}>1 ano</option>
+                    <option value="never">Sem expiração</option>
+                  </select>
+                </div>
+              </div>
 
-          <Button
-            onClick={handleCreate}
-            disabled={
-              isCreating ||
-              name.trim().length < 3 ||
-              selectedScopes.length === 0
-            }
-          >
-            {isCreating ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              <KeyRound />
-            )}
-            Criar token
-          </Button>
-        </CardContent>
-      </Card>
+              <fieldset className="space-y-3">
+                <legend className="text-sm font-medium">Permissões</legend>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {scopes.map((scope) => (
+                    <label
+                      key={scope.value}
+                      className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 hover:bg-muted/50"
+                    >
+                      <input
+                        type="checkbox"
+                        className="mt-1 size-4 accent-primary"
+                        checked={selectedScopes.includes(scope.value)}
+                        onChange={() => toggleScope(scope.value)}
+                        disabled={isCreating}
+                      />
+                      <span>
+                        <span className="block text-sm font-medium">
+                          {scope.label}
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          {scope.description}
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Tokens cadastrados</CardTitle>
-          <CardDescription>
-            Revogar um token interrompe imediatamente o acesso do MCP.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {items.length === 0 ? (
-            <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-              Nenhum token cadastrado.
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Permissões</TableHead>
-                  <TableHead>Último uso</TableHead>
-                  <TableHead>Expira em</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {items.map((client) => {
-                  const status = clientStatus(client)
-                  return (
-                    <TableRow key={client.id}>
-                      <TableCell>
-                        <div className="font-medium">{client.name}</div>
-                        <div className="font-mono text-xs text-muted-foreground">
-                          {client.id.slice(0, 8)}…
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            status === 'Ativo'
-                              ? 'default'
-                              : status === 'Expirado'
-                                ? 'secondary'
-                                : 'outline'
-                          }
-                        >
-                          {status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex max-w-sm flex-wrap gap-1">
-                          {client.scopes.map((scope) => (
-                            <Badge key={scope} variant="outline">
-                              {scope}
-                            </Badge>
-                          ))}
-                        </div>
-                      </TableCell>
-                      <TableCell>{formatDate(client.lastUsedAt)}</TableCell>
-                      <TableCell>
-                        {client.expiresAt
-                          ? formatDate(client.expiresAt)
-                          : 'Sem expiração'}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setClientToRevoke(client)}
-                          disabled={status === 'Revogado' || isRevoking}
-                        >
-                          <Trash2 />
-                          Revogar
-                        </Button>
-                      </TableCell>
+              <Button
+                onClick={handleCreate}
+                disabled={
+                  isCreating ||
+                  name.trim().length < 3 ||
+                  selectedScopes.length === 0
+                }
+              >
+                {isCreating ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <KeyRound />
+                )}
+                Criar token
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Tokens cadastrados</CardTitle>
+              <CardDescription>
+                Revogar um token interrompe imediatamente o acesso do MCP.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {items.length === 0 ? (
+                <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+                  Nenhum token cadastrado.
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Permissões</TableHead>
+                      <TableHead>Último uso</TableHead>
+                      <TableHead>Expira em</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {items.map((client) => {
+                      const status = clientStatus(client)
+                      return (
+                        <TableRow key={client.id}>
+                          <TableCell>
+                            <div className="font-medium">{client.name}</div>
+                            <div className="font-mono text-xs text-muted-foreground">
+                              {client.id.slice(0, 8)}…
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                status === 'Ativo'
+                                  ? 'default'
+                                  : status === 'Expirado'
+                                    ? 'secondary'
+                                    : 'outline'
+                              }
+                            >
+                              {status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex max-w-sm flex-wrap gap-1">
+                              {client.scopes.map((scope) => (
+                                <Badge key={scope} variant="outline">
+                                  {scope}
+                                </Badge>
+                              ))}
+                            </div>
+                          </TableCell>
+                          <TableCell>{formatDate(client.lastUsedAt)}</TableCell>
+                          <TableCell>
+                            {client.expiresAt
+                              ? formatDate(client.expiresAt)
+                              : 'Sem expiração'}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setClientToRevoke(client)}
+                              disabled={status === 'Revogado' || isRevoking}
+                            >
+                              <Trash2 />
+                              Revogar
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="installation">
+          <McpInstallationGuide apiUrl={apiUrl} apiKey={apiKey} />
+        </TabsContent>
+      </Tabs>
 
       <Dialog
         open={!!createdClient}

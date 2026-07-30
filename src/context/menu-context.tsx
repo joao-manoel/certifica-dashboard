@@ -1,24 +1,51 @@
-import React, { createContext, ReactNode, useContext, useState } from 'react'
+'use client'
 
-// Defina o tipo do contexto
+import React, {
+  createContext,
+  ReactNode,
+  useContext,
+  useSyncExternalStore
+} from 'react'
+
+const SIDEBAR_STORAGE_KEY = 'certifica-sidebar-open'
+const SIDEBAR_CHANGE_EVENT = 'certifica-sidebar-change'
+
+function subscribeToSidebar(callback: () => void) {
+  window.addEventListener('storage', callback)
+  window.addEventListener(SIDEBAR_CHANGE_EVENT, callback)
+
+  return () => {
+    window.removeEventListener('storage', callback)
+    window.removeEventListener(SIDEBAR_CHANGE_EVENT, callback)
+  }
+}
+
+function getSidebarSnapshot() {
+  return window.localStorage.getItem(SIDEBAR_STORAGE_KEY) !== 'false'
+}
+
 interface MenuContextType {
   isOpen: boolean
   setOpen: (open: boolean) => void
 }
 
-// Criação do contexto com valores iniciais
 const MenuContext = createContext<MenuContextType | undefined>(undefined)
 
-// Provedor do contexto
 interface MenuProviderProps {
   children: ReactNode
 }
 
 export const MenuProvider = ({ children }: MenuProviderProps) => {
-  const [isOpen, setIsOpen] = useState<boolean>(true)
+  const isOpen = useSyncExternalStore(
+    subscribeToSidebar,
+    getSidebarSnapshot,
+    () => true
+  )
 
-  // Função para alternar o estado do menu
-  const setOpen = (open: boolean) => setIsOpen(open)
+  const setOpen = (open: boolean) => {
+    window.localStorage.setItem(SIDEBAR_STORAGE_KEY, String(open))
+    window.dispatchEvent(new Event(SIDEBAR_CHANGE_EVENT))
+  }
 
   return (
     <MenuContext.Provider value={{ isOpen, setOpen }}>
@@ -27,7 +54,6 @@ export const MenuProvider = ({ children }: MenuProviderProps) => {
   )
 }
 
-// Hook para acessar o contexto facilmente
 export const useMenu = (): MenuContextType => {
   const context = useContext(MenuContext)
   if (!context) {

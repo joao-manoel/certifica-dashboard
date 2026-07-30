@@ -2,43 +2,59 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  CalendarClock,
+  Edit3,
   Eye,
   FileText,
   LayoutGrid,
+  List,
   Loader2,
+  MoreHorizontal,
   Search,
-  Table as TableIcon,
   Trash2,
-  X,
+  X
 } from 'lucide-react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import { toast } from 'sonner'
 
-import type { PostListItem, Role } from '@/@types/types-posts'
+import type {
+  PostListItem,
+  PostStatus,
+  Role,
+  Visibility
+} from '@/@types/types-posts'
 import { deletePostAction } from '@/actions/delete-post-action'
 import { DeleteDialog } from '@/components/delete-dialog'
+import { EmptyState, ErrorState } from '@/components/page-state'
 import StatusBadge from '@/components/status-badge'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle
-} from '@/components/ui/empty'
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger
+} from '@/components/ui/context-menu'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious} from '@/components/ui/pagination'
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
@@ -46,24 +62,66 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow} from '@/components/ui/table'
+  TableRow
+} from '@/components/ui/table'
 import VisibilityBadge from '@/components/visibility-badge'
 import { listPosts } from '@/http/list-posts'
 import { searchPosts } from '@/http/search-posts'
 import { cn } from '@/lib/utils'
 
-import SkeletonPostTable from './skeleton-posts-table'
+type ViewMode = 'table' | 'cards'
+const perPage = 12
 
-function useDebounced<T>(value: T, delay = 500) {
+function useDebounced<T>(value: T, delay = 400) {
   const [debounced, setDebounced] = useState(value)
+
   useEffect(() => {
-    const id = setTimeout(() => setDebounced(value), delay)
-    return () => clearTimeout(id)
-  }, [value, delay])
+    const timeout = window.setTimeout(() => setDebounced(value), delay)
+    return () => window.clearTimeout(timeout)
+  }, [delay, value])
+
   return debounced
 }
 
-type ViewMode = 'table' | 'cards'
+function formatDate(value: string | null) {
+  if (!value) return 'Não publicado'
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  }).format(new Date(value))
+}
+
+function PostCover({
+  post,
+  compact = false
+}: {
+  post: PostListItem
+  compact?: boolean
+}) {
+  return (
+    <div
+      className={cn(
+        'relative shrink-0 overflow-hidden rounded-lg border bg-muted',
+        compact ? 'h-14 w-20' : 'aspect-[16/9] w-full'
+      )}
+    >
+      {post.coverUrl ? (
+        <Image
+          src={post.coverUrl}
+          alt=""
+          fill
+          sizes={compact ? '80px' : '(max-width: 768px) 100vw, 33vw'}
+          className="object-cover"
+        />
+      ) : (
+        <div className="grid size-full place-items-center">
+          <FileText className="size-5 text-muted-foreground" />
+        </div>
+      )}
+    </div>
+  )
+}
 
 export function PostsList({
   currentUser
@@ -71,58 +129,68 @@ export function PostsList({
   currentUser: { id: string; role: Role } | null
 }) {
   const router = useRouter()
-  const params = useSearchParams()
+  const searchParams = useSearchParams()
   const queryClient = useQueryClient()
+  const page = Math.max(1, Number(searchParams.get('page') ?? 1))
+  const status = (searchParams.get('status') ?? 'all') as PostStatus | 'all'
+  const visibility = (searchParams.get('visibility') ?? 'all') as
+    Visibility | 'all'
+  const view = (
+    searchParams.get('view') === 'cards' ? 'cards' : 'table'
+  ) as ViewMode
+  const urlQuery = searchParams.get('q') ?? ''
+  const [search, setSearch] = useState(urlQuery)
+  const debouncedSearch = useDebounced(search)
   const [postToDelete, setPostToDelete] = useState<PostListItem | null>(null)
   const [isDeleting, startDeleting] = useTransition()
 
-  // estado de URL / filtros
-  const [page, setPage] = useState<number>(() => {
-    const p = Number(params.get('page') ?? '1')
-    return Number.isFinite(p) && p > 0 ? p : 1
-  })
-  const perPage = 12 // fixo
-  const [q, setQ] = useState<string>(() => params.get('q') ?? '')
-  const debouncedQ = useDebounced(q, 400)
+  function replaceParams(changes: Record<string, string | undefined>) {
+    const next = new URLSearchParams(searchParams.toString())
+    Object.entries(changes).forEach(([key, value]) => {
+      if (!value || value === 'all' || (key === 'page' && value === '1')) {
+        next.delete(key)
+      } else {
+        next.set(key, value)
+      }
+    })
+    router.replace(`/posts${next.size ? `?${next.toString()}` : ''}`, {
+      scroll: false
+    })
+  }
 
-  // view mode (persistência simples no localStorage)
-  const [view, setView] = useState<ViewMode>(() => {
-    if (typeof window === 'undefined') return 'table'
-    return (localStorage.getItem('posts_view') as ViewMode) || 'table'
-  })
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('posts_view', view)
-    }
-  }, [view])
+    if (debouncedSearch.trim() === urlQuery) return
+    replaceParams({ q: debouncedSearch.trim() || undefined, page: undefined })
+    // replaceParams intentionally reads the current URL at execution time.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch, urlQuery])
 
-  // sync query string
-  useEffect(() => {
-    const sp = new URLSearchParams()
-    if (page > 1) sp.set('page', String(page))
-    if (q.trim()) sp.set('q', q.trim())
-    router.replace(`?${sp.toString()}`, { scroll: false })
-  }, [page, q, router])
-
-  // dados
   const queryKey = useMemo(
-    () => ['posts', { page, perPage, q: debouncedQ }],
-    [page, perPage, debouncedQ]
+    () => ['posts', { page, q: urlQuery, status, visibility }],
+    [page, status, urlQuery, visibility]
   )
 
-  const { data, isLoading, isFetching, isError, error } = useQuery({
+  const query = useQuery({
     queryKey,
-    queryFn: async () => {
-      if (debouncedQ.trim()) {
-        return searchPosts({ q: debouncedQ.trim(), page, perPage })
+    queryFn: () => {
+      const filters = {
+        page,
+        perPage,
+        status: status === 'all' ? undefined : status,
+        visibility: visibility === 'all' ? undefined : visibility
       }
-      return listPosts({ page, perPage })
+      return urlQuery
+        ? searchPosts({ ...filters, q: urlQuery })
+        : listPosts(filters)
     }
   })
 
-  const items = (data?.items ?? []) as PostListItem[]
-  const total = data?.total ?? 0
+  const items = query.data?.items ?? []
+  const total = query.data?.total ?? 0
   const totalPages = Math.max(1, Math.ceil(total / perPage))
+  const hasFilters = Boolean(
+    urlQuery || status !== 'all' || visibility !== 'all'
+  )
 
   function canDelete(post: PostListItem) {
     return (
@@ -140,452 +208,396 @@ export function PostsList({
         toast.error(response.message)
         return
       }
-
       setPostToDelete(null)
       if (items.length === 1 && page > 1) {
-        setPage((current) => current - 1)
+        replaceParams({ page: String(page - 1) })
       }
       await queryClient.invalidateQueries({ queryKey: ['posts'] })
       router.refresh()
-      toast.success('Post excluído com sucesso.')
+      toast.success('Publicação excluída.')
     })
   }
 
   return (
-    <div className="space-y-5">
-      {/* Topbar: busca + view toggle + contagem */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        {/* search */}
-        <div className="relative w-full sm:max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            value={q}
-            onChange={(event) => {
-              setQ(event.target.value)
-              setPage(1)
-            }}
-            placeholder="Buscar por título, categoria ou tag…"
-            className="pl-9 pr-20"
-          />
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
-            {isFetching && (
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            )}
-            {q && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={() => {
-                  setQ('')
-                  setPage(1)
-                }}
-                title="Limpar busca"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        </div>
+    <div className="space-y-4">
+      <Card>
+        <CardContent className="space-y-4 py-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+            <div className="relative min-w-0 flex-1">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Buscar por título, categoria ou tag…"
+                className="pl-9 pr-10"
+                aria-label="Buscar publicações"
+              />
+              {query.isFetching ? (
+                <Loader2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+              ) : search ? (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 size-8 -translate-y-1/2"
+                  onClick={() => setSearch('')}
+                  aria-label="Limpar busca"
+                >
+                  <X className="size-4" />
+                </Button>
+              ) : null}
+            </div>
 
-        {/* toggle view */}
-        <div className="flex items-center gap-2 self-end sm:self-auto">
-          <div className="rounded-lg border p-1">
-            <div className="flex">
-              <Button
-                variant={view === 'table' ? 'default' : 'ghost'}
-                size="sm"
-                className={cn(
-                  'gap-2 rounded-md',
-                  view === 'table' ? '' : 'hover:bg-transparent'
-                )}
-                onClick={() => setView('table')}
+            <Select
+              value={status}
+              onValueChange={(value) =>
+                replaceParams({ status: value, page: undefined })
+              }
+            >
+              <SelectTrigger
+                className="w-full lg:w-44"
+                aria-label="Filtrar por status"
               >
-                <TableIcon className="h-4 w-4" />
-                <span className="hidden sm:inline">Tabela</span>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os status</SelectItem>
+                <SelectItem value="PUBLISHED">Publicados</SelectItem>
+                <SelectItem value="DRAFT">Rascunhos</SelectItem>
+                <SelectItem value="SCHEDULED">Agendados</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={visibility}
+              onValueChange={(value) =>
+                replaceParams({ visibility: value, page: undefined })
+              }
+            >
+              <SelectTrigger
+                className="w-full lg:w-44"
+                aria-label="Filtrar por visibilidade"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toda visibilidade</SelectItem>
+                <SelectItem value="PUBLIC">Públicas</SelectItem>
+                <SelectItem value="UNLISTED">Não listadas</SelectItem>
+                <SelectItem value="PRIVATE">Privadas</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <div className="flex rounded-lg border p-1">
+              <Button
+                variant={view === 'table' ? 'secondary' : 'ghost'}
+                size="icon"
+                className="size-8"
+                onClick={() => replaceParams({ view: 'table' })}
+                aria-label="Visualização em lista"
+                aria-pressed={view === 'table'}
+              >
+                <List className="size-4" />
               </Button>
               <Button
-                variant={view === 'cards' ? 'default' : 'ghost'}
-                size="sm"
-                className={cn(
-                  'gap-2 rounded-md',
-                  view === 'cards' ? '' : 'hover:bg-transparent'
-                )}
-                onClick={() => setView('cards')}
+                variant={view === 'cards' ? 'secondary' : 'ghost'}
+                size="icon"
+                className="size-8"
+                onClick={() => replaceParams({ view: 'cards' })}
+                aria-label="Visualização em cards"
+                aria-pressed={view === 'cards'}
               >
-                <LayoutGrid className="h-4 w-4" />
-                <span className="hidden sm:inline">Cards</span>
+                <LayoutGrid className="size-4" />
               </Button>
             </div>
           </div>
 
-          <span className="text-xs text-muted-foreground">
-            {total > 0 ? `${total} resultado${total === 1 ? '' : 's'}` : '—'}
-          </span>
-        </div>
-      </div>
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+            <span>
+              {total}{' '}
+              {total === 1
+                ? 'publicação encontrada'
+                : 'publicações encontradas'}
+            </span>
+            {hasFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSearch('')
+                  router.replace('/posts', { scroll: false })
+                }}
+              >
+                <X className="size-4" />
+                Limpar filtros
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Conteúdo */}
-      {isLoading ? (
+      {query.isPending ? (
         view === 'table' ? (
-          <div className="rounded-md border overflow-hidden">
-            <Table>
+          <Card className="overflow-hidden py-0">
+            <div className="space-y-0 divide-y">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <div key={index} className="flex items-center gap-4 p-4">
+                  <Skeleton className="h-14 w-20" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="h-3 w-1/3" />
+                  </div>
+                  <Skeleton className="h-7 w-20" />
+                </div>
+              ))}
+            </div>
+          </Card>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <Skeleton key={index} className="h-80 rounded-xl" />
+            ))}
+          </div>
+        )
+      ) : query.isError ? (
+        <ErrorState
+          title="Não foi possível carregar as publicações"
+          description={
+            query.error instanceof Error
+              ? query.error.message
+              : 'Verifique sua conexão e tente novamente.'
+          }
+          onRetry={() => void query.refetch()}
+        />
+      ) : items.length === 0 ? (
+        <EmptyState
+          icon={<FileText className="size-10 text-muted-foreground" />}
+          title={
+            hasFilters ? 'Nenhuma publicação encontrada' : 'Comece seu blog'
+          }
+          description={
+            hasFilters
+              ? 'Tente remover alguns filtros ou usar outros termos de busca.'
+              : 'Crie a primeira publicação para começar a alimentar o blog.'
+          }
+          action={
+            hasFilters ? (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSearch('')
+                  router.replace('/posts', { scroll: false })
+                }}
+              >
+                Limpar filtros
+              </Button>
+            ) : (
+              <Button asChild>
+                <Link href="/posts/create">Criar publicação</Link>
+              </Button>
+            )
+          }
+        />
+      ) : view === 'table' ? (
+        <Card className="overflow-hidden py-0">
+          <div className="overflow-hidden">
+            <Table className="table-fixed">
               <TableHeader>
-                <TableRow>
-                  <TableHead>Título</TableHead>
-                  <TableHead className="hidden md:table-cell">Status</TableHead>
-                  <TableHead className="hidden md:table-cell">
-                    Visibilidade
+                <TableRow className="bg-muted/40 hover:bg-muted/40">
+                  <TableHead className="w-[calc(100%-3.5rem)] sm:w-[58%]">
+                    Publicação
                   </TableHead>
-                  <TableHead className="hidden lg:table-cell">
-                    Categorias
+                  <TableHead className="hidden w-32 sm:table-cell">
+                    Estado
                   </TableHead>
-                  <TableHead className="hidden lg:table-cell">Tags</TableHead>
-                  <TableHead className="hidden sm:table-cell">
-                    Publicado
+                  <TableHead className="hidden w-36 xl:table-cell">
+                    Autor
                   </TableHead>
-                  <TableHead className="w-[120px] text-right">Ações</TableHead>
+                  <TableHead className="hidden w-28 2xl:table-cell">
+                    Desempenho
+                  </TableHead>
+                  <TableHead className="hidden w-36 lg:table-cell">
+                    Data
+                  </TableHead>
+                  <TableHead className="w-14">
+                    <span className="sr-only">Ações</span>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {Array.from({ length: 12 }).map((_, i) => (
-                  <TableRow key={`sk-${i}`}>
-                    <SkeletonPostTable />
-                  </TableRow>
+                {items.map((post) => (
+                  <ContextMenu key={post.id}>
+                    <ContextMenuTrigger asChild>
+                      <TableRow className="group">
+                        <TableCell className="min-w-0">
+                          <Link
+                            href={`/posts/edit/${post.id}`}
+                            className="flex min-w-0 items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          >
+                            <PostCover post={post} compact />
+                            <div className="min-w-0 flex-1 overflow-hidden">
+                              <p className="truncate font-medium group-hover:text-primary">
+                                {post.title}
+                              </p>
+                              <p
+                                className="mt-1 block max-w-full truncate text-xs text-muted-foreground"
+                                title={post.excerpt || `/${post.slug}`}
+                              >
+                                {post.excerpt || `/${post.slug}`}
+                              </p>
+                              {post.categories.length > 0 && (
+                                <div className="mt-2 hidden gap-1 sm:flex">
+                                  {post.categories
+                                    .slice(0, 2)
+                                    .map((category) => (
+                                      <Badge
+                                        key={category.id}
+                                        variant="outline"
+                                        className="h-5 max-w-28 truncate text-[10px]"
+                                      >
+                                        {category.name}
+                                      </Badge>
+                                    ))}
+                                </div>
+                              )}
+                            </div>
+                          </Link>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          <div className="space-y-1.5">
+                            <StatusBadge status={post.status} />
+                            <div>
+                              <VisibilityBadge visibility={post.visibility} />
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden xl:table-cell">
+                          <p className="truncate text-sm">{post.author.name}</p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            @{post.author.username}
+                          </p>
+                        </TableCell>
+                        <TableCell className="hidden 2xl:table-cell">
+                          <div className="flex items-center gap-1.5 text-sm">
+                            <Eye className="size-4 text-muted-foreground" />
+                            {post.views.toLocaleString('pt-BR')}
+                          </div>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {post.readTime} min de leitura
+                          </p>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell">
+                          <p className="truncate text-sm">
+                            {formatDate(post.publishedAt)}
+                          </p>
+                          {post.status === 'SCHEDULED' && post.scheduledFor && (
+                            <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                              <CalendarClock className="size-3" />
+                              {formatDate(post.scheduledFor)}
+                            </p>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <PostActions
+                            post={post}
+                            canDelete={canDelete(post)}
+                            disabled={isDeleting}
+                            onDelete={() => setPostToDelete(post)}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    </ContextMenuTrigger>
+                    <PostContextMenu
+                      post={post}
+                      canDelete={canDelete(post)}
+                      disabled={isDeleting}
+                      onDelete={() => setPostToDelete(post)}
+                    />
+                  </ContextMenu>
                 ))}
               </TableBody>
             </Table>
           </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Card key={`sk-card-${i}`} className="overflow-hidden">
-                <Skeleton className="h-32 w-full bg-zinc-300" />
-                <CardHeader className="space-y-2">
-                  <Skeleton className="h-5 w-3/4" />
-                  <Skeleton className="h-3 w-1/2" />
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="flex flex-wrap gap-2">
-                    <Skeleton className="h-5 w-16" />
-                    <Skeleton className="h-5 w-20" />
-                  </div>
-                </CardContent>
-                <CardFooter className="flex items-center justify-between">
-                  <Skeleton className="h-5 w-24" />
-                  <Skeleton className="h-8 w-20" />
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        )
-      ) : isError ? (
-        <p className="text-sm text-red-500">
-          {(error as Error)?.message ?? 'Erro ao carregar posts.'}
-        </p>
-      ) : (items ?? []).length === 0 ? (
-        <div className="rounded-md border p-10 text-center text-sm text-muted-foreground">
-          <Empty>
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <FileText />
-              </EmptyMedia>
-              <EmptyTitle>Nenhuma publicação</EmptyTitle>
-              <EmptyDescription>
-                Você ainda não criou nenhuma publicação. Comece criando sua
-                primeira publicação.
-              </EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent>
-              <div className="flex gap-2">
-                <Button asChild>
-                  <Link href="/posts/create">Criar Publicação</Link>
-                </Button>
-              </div>
-            </EmptyContent>
-          </Empty>
-        </div>
-      ) : view === 'table' ? (
-        <div className="rounded-md border overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/40">
-                <TableHead>Título</TableHead>
-                <TableHead className="hidden md:table-cell">Status</TableHead>
-                <TableHead className="hidden md:table-cell">
-                  Visibilidade
-                </TableHead>
-
-                <TableHead className="hidden lg:table-cell">Autor</TableHead>
-                <TableHead className="hidden sm:table-cell">
-                  Publicado
-                </TableHead>
-                <TableHead className="hidden lg:table-cell text-center">
-                  Visualizações
-                </TableHead>
-                <TableHead className="w-[120px] text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {items.map((p) => {
-                const categories = p.categories ?? []
-                return (
-                  <TableRow
-                    key={p.id}
-                    className="hover:bg-muted/30 transition-colors"
-                  >
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        {p.coverUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={p.coverUrl}
-                            alt=""
-                            className="h-10 w-16 rounded object-cover border"
-                          />
-                        ) : (
-                          <div className="h-10 w-16 rounded border bg-muted" />
-                        )}
-                        <div className="flex flex-col">
-                          <h1 className="font-medium line-clamp-1">
-                            {p.title}
-                          </h1>
-                          <div className="flex gap-2">
-                            <span className="flex gap-2">
-                              {categories.length
-                                ? categories.map((c) => (
-                                    <Badge
-                                      key={c.id}
-                                      variant="outline"
-                                      className="text-[10px]"
-                                    >
-                                      {c.name}
-                                    </Badge>
-                                  ))
-                                : ''}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </TableCell>
-
-                    <TableCell className="hidden md:table-cell">
-                      <StatusBadge status={p.status} />
-                    </TableCell>
-
-                    <TableCell className="hidden md:table-cell">
-                      <VisibilityBadge visibility={p.visibility} />
-                    </TableCell>
-
-                    <TableCell className="hidden lg:table-cell">
-                      <div className="flex flex-wrap gap-1">
-                        {p.author.name}
-                      </div>
-                    </TableCell>
-
-                    <TableCell className="hidden sm:table-cell">
-                      <span
-                        className={cn(
-                          'text-xs',
-                          !p.publishedAt && 'text-muted-foreground'
-                        )}
-                      >
-                        {p.publishedAt
-                          ? new Date(p.publishedAt).toLocaleDateString()
-                          : '—'}
-                      </span>
-                    </TableCell>
-
-                    <TableCell className="hidden lg:table-cell justify-center">
-                      <div className="flex flex-wrap gap-1 justify-center">
-                        {p.views}
-                      </div>
-                    </TableCell>
-
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link href={`/posts/edit/${p.id}`}>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="cursor-pointer"
-                          >
-                            Editar
-                          </Button>
-                        </Link>
-                        {canDelete(p) && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => setPostToDelete(p)}
-                            disabled={isDeleting}
-                            aria-label={`Excluir ${p.title}`}
-                          >
-                            <Trash2 />
-                            <span className="sr-only">Excluir</span>
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
-        </div>
+        </Card>
       ) : (
-        // cards view
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((p) => {
-            const categories = p.categories ?? []
-            const tags = p.tags ?? []
-            return (
-              <Card key={p.id} className="overflow-hidden group">
-                <div className="relative h-32 w-full bg-muted">
-                  {p.coverUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={p.coverUrl}
-                      alt=""
-                      className="h-full w-full object-cover transition-transform group-hover:scale-[1.02]"
-                    />
-                  ) : null}
-                </div>
-
-                <CardHeader className="pb-2">
-                  <h3 className="line-clamp-2 font-semibold">{p.title}</h3>
-                </CardHeader>
-
-                <CardContent className="pb-2">
-                  <div className="flex flex-wrap gap-1">
-                    {categories.slice(0, 3).map((c) => (
-                      <Badge
-                        key={c.id}
-                        variant="outline"
-                        className="text-[10px]"
-                      >
-                        {c.name}
-                      </Badge>
-                    ))}
-                    {categories.length === 0 && (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    )}
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {tags.slice(0, 4).map((t) => (
-                      <Badge
-                        key={t.id}
-                        variant="outline"
-                        className="text-[10px]"
-                      >
-                        #{t.name}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-
-                <CardFooter className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <StatusBadge status={p.status} />
-                    <VisibilityBadge visibility={p.visibility} />
-                    <span
-                      className={cn(
-                        'text-[10px]',
-                        !p.publishedAt && 'text-muted-foreground'
-                      )}
-                    >
-                      {p.publishedAt
-                        ? new Date(p.publishedAt).toLocaleDateString()
-                        : '—'}
-                    </span>
-                    <div className="flex gap-2 items-center">
-                      <Eye className="size-4" />
-                      {p.views}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Link href={`/posts/edit/${p.id}`}>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="cursor-pointer"
-                      >
-                        Editar
-                      </Button>
-                    </Link>
-                    {canDelete(p) && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => setPostToDelete(p)}
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {items.map((post) => (
+            <ContextMenu key={post.id}>
+              <ContextMenuTrigger asChild>
+                <Card className="group overflow-hidden pt-0">
+                  <Link href={`/posts/edit/${post.id}`} className="block">
+                    <PostCover post={post} />
+                  </Link>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <Link
+                          href={`/posts/edit/${post.id}`}
+                          className="line-clamp-2 font-semibold leading-snug hover:text-primary"
+                        >
+                          {post.title}
+                        </Link>
+                        <p
+                          className="mt-1 truncate text-sm text-muted-foreground"
+                          title={post.excerpt || 'Sem resumo cadastrado.'}
+                        >
+                          {post.excerpt || 'Sem resumo cadastrado.'}
+                        </p>
+                      </div>
+                      <PostActions
+                        post={post}
+                        canDelete={canDelete(post)}
                         disabled={isDeleting}
-                        aria-label={`Excluir ${p.title}`}
-                      >
-                        <Trash2 />
-                        <span className="sr-only">Excluir</span>
-                      </Button>
-                    )}
-                  </div>
-                </CardFooter>
-              </Card>
-            )
-          })}
+                        onDelete={() => setPostToDelete(post)}
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      <StatusBadge status={post.status} />
+                      <VisibilityBadge visibility={post.visibility} />
+                    </div>
+                    <div className="flex items-center justify-between border-t pt-3 text-xs text-muted-foreground">
+                      <span>{post.author.name}</span>
+                      <span className="flex items-center gap-1">
+                        <Eye className="size-3.5" />
+                        {post.views.toLocaleString('pt-BR')}
+                      </span>
+                      <span>{formatDate(post.publishedAt)}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </ContextMenuTrigger>
+              <PostContextMenu
+                post={post}
+                canDelete={canDelete(post)}
+                disabled={isDeleting}
+                onDelete={() => setPostToDelete(post)}
+              />
+            </ContextMenu>
+          ))}
         </div>
       )}
 
-      {/* Paginação (shadcn) */}
       {totalPages > 1 && (
-        <>
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  aria-disabled={page <= 1}
-                  className={cn(page <= 1 && 'pointer-events-none opacity-50')}
-                  onClick={() => page > 1 && setPage(page - 1)}
-                />
-              </PaginationItem>
-
-              {Array.from({ length: totalPages })
-                .slice(
-                  Math.max(0, page - 3),
-                  Math.max(0, page - 3) + Math.min(5, totalPages)
-                )
-                .map((_, i) => {
-                  const start = Math.max(1, page - 2)
-                  const pnum = start + i
-                  return (
-                    <PaginationItem key={pnum}>
-                      <PaginationLink
-                        isActive={pnum === page}
-                        onClick={() => setPage(pnum)}
-                      >
-                        {pnum}
-                      </PaginationLink>
-                    </PaginationItem>
-                  )
-                })}
-
-              <PaginationItem>
-                <PaginationNext
-                  aria-disabled={page >= totalPages}
-                  className={cn(
-                    page >= totalPages && 'pointer-events-none opacity-50'
-                  )}
-                  onClick={() => page < totalPages && setPage(page + 1)}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-
-          <div className="text-xs text-muted-foreground">
-            Página {page} de {totalPages} • {total} itens
+        <div className="flex flex-col items-center justify-between gap-3 border-t pt-4 sm:flex-row">
+          <p className="text-sm text-muted-foreground">
+            Página {page} de {totalPages} · {total} itens
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              disabled={page <= 1}
+              onClick={() => replaceParams({ page: String(page - 1) })}
+            >
+              Anterior
+            </Button>
+            <Button
+              variant="outline"
+              disabled={page >= totalPages}
+              onClick={() => replaceParams({ page: String(page + 1) })}
+            >
+              Próxima
+            </Button>
           </div>
-        </>
+        </div>
       )}
 
       <DeleteDialog
@@ -594,11 +606,95 @@ export function PostsList({
           if (!open && !isDeleting) setPostToDelete(null)
         }}
         onConfirm={handleDelete}
-        title="Excluir post"
-        description={`Tem certeza que deseja excluir “${postToDelete?.title ?? ''}”? O post será removido definitivamente do blog e esta ação não pode ser desfeita.`}
-        confirmLabel="Excluir post"
+        title="Excluir publicação?"
+        description={`“${postToDelete?.title ?? ''}” será removida definitivamente do blog. Esta ação não pode ser desfeita.`}
+        confirmLabel="Excluir publicação"
         isPending={isDeleting}
       />
     </div>
+  )
+}
+
+function PostContextMenu({
+  post,
+  canDelete,
+  disabled,
+  onDelete
+}: {
+  post: PostListItem
+  canDelete: boolean
+  disabled: boolean
+  onDelete: () => void
+}) {
+  return (
+    <ContextMenuContent className="w-48">
+      <ContextMenuItem asChild>
+        <Link href={`/posts/edit/${post.id}`}>
+          <Edit3 className="size-4" />
+          Editar publicação
+        </Link>
+      </ContextMenuItem>
+      {canDelete && (
+        <>
+          <ContextMenuSeparator />
+          <ContextMenuItem
+            variant="destructive"
+            disabled={disabled}
+            onSelect={onDelete}
+          >
+            <Trash2 className="size-4" />
+            Excluir publicação
+          </ContextMenuItem>
+        </>
+      )}
+    </ContextMenuContent>
+  )
+}
+
+function PostActions({
+  post,
+  canDelete,
+  disabled,
+  onDelete
+}: {
+  post: PostListItem
+  canDelete: boolean
+  disabled: boolean
+  onDelete: () => void
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="shrink-0"
+          aria-label={`Ações para ${post.title}`}
+        >
+          <MoreHorizontal className="size-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem asChild>
+          <Link href={`/posts/edit/${post.id}`}>
+            <Edit3 className="size-4" />
+            Editar publicação
+          </Link>
+        </DropdownMenuItem>
+        {canDelete && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              variant="destructive"
+              disabled={disabled}
+              onSelect={onDelete}
+            >
+              <Trash2 className="size-4" />
+              Excluir
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

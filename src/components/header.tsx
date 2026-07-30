@@ -1,23 +1,27 @@
 import Link from 'next/link'
 
-import { isAuthenticated } from '@/auth/auth'
-
+import { Breadcrumbs } from './breadcrumbs'
 import CollapseMenuButton from './collapse-menu-button'
-import ProfileButton from './profile-button'
 import Logo from './logo'
-export default async function Header() {
-  const isAuth = await isAuthenticated()
+import { MobileNavigation } from './mobile-navigation'
+import ProfileButton from './profile-button'
+import { ThemeSwitcher } from './theme-switcher'
 
+export default async function Header() {
   return (
-    <header className="sticky z-50 flex items-center justify-between border-b p-4 dark:bg-[#171716]">
+    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/95 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:px-5">
       <div className="flex items-center gap-4">
+        <MobileNavigation />
         <CollapseMenuButton />
         <Link href="/" className="flex items-center gap-2">
           <Logo size="sm" />
         </Link>
+        <div className="hidden h-6 border-s md:block" />
+        <Breadcrumbs />
       </div>
-      <div className="flex items-center gap-4">
-        {isAuth && <ProfileButton />}
+      <div className="flex items-center gap-2">
+        <ThemeSwitcher />
+        <ProfileButton />
       </div>
     </header>
   )

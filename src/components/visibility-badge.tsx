@@ -1,32 +1,28 @@
-import type { Visibility } from '@/@types/types-posts'
 import { Earth, Link2, Lock } from 'lucide-react'
-import { Badge } from './ui/badge'
+
+import type { Visibility } from '@/@types/types-posts'
+import { Badge } from '@/components/ui/badge'
+
+const visibilityConfig = {
+  PUBLIC: { label: 'Público', icon: Earth },
+  UNLISTED: { label: 'Não listado', icon: Link2 },
+  PRIVATE: { label: 'Privado', icon: Lock }
+} as const
 
 export default function VisibilityBadge({
   visibility
 }: {
   visibility: Visibility
 }) {
-  if (visibility === 'PUBLIC') {
-    return (
-      <Badge className="inline-flex items-center gap-1 rounded-md bg-transparent px-2 py-1 text-sm font-medium text-black">
-        <Earth className="" />
-        Publico
-      </Badge>
-    )
-  } else if (visibility === 'UNLISTED') {
-    return (
-      <Badge className="inline-flex items-center gap-1 rounded-md bg-transparent px-2 py-1 text-sm font-medium text-black">
-        <Link2 />
-        Não listado
-      </Badge>
-    )
-  } else if (visibility === 'PRIVATE') {
-    return (
-      <Badge className="inline-flex items-center gap-1 rounded-md bg-transparent px-2 py-1 text-sm font-medium text-black">
-        <Lock />
-        Privado
-      </Badge>
-    )
-  }
+  const config = visibilityConfig[visibility]
+  const Icon = config.icon
+  return (
+    <Badge
+      variant="outline"
+      className="border-border bg-muted/50 text-muted-foreground"
+    >
+      <Icon className="size-3.5" />
+      {config.label}
+    </Badge>
+  )
 }

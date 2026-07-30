@@ -10,7 +10,6 @@ import {
   Plus,
   RotateCw,
   Search,
-  Trash2,
   Upload
 } from 'lucide-react'
 import Image from 'next/image'
@@ -34,7 +33,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog'
@@ -52,8 +50,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { listMedia, type ListMediaResponse } from '@/http/list-media'
 import {
   createExternalMedia,
-  deleteMedia,
-  getMediaDetails,
   transformMedia,
   updateMedia
 } from '@/http/manage-media'
@@ -78,14 +74,12 @@ export function MediaLibrary({
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const queryClient = useQueryClient()
   const page = Math.max(1, Number(searchParams.get('page') ?? 1))
   const q = searchParams.get('q') ?? ''
   const source = (searchParams.get('source') ?? 'all') as
     'all' | 'EXTERNAL' | 'S3'
   const [search, setSearch] = useState(q)
   const [createOpen, setCreateOpen] = useState(false)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const query = useQuery({
     queryKey: ['media', { page, q, source }],
@@ -189,7 +183,7 @@ export function MediaLibrary({
         <>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {query.data.items.map((item) => (
-              <MediaCard key={item.id} item={item} onEdit={setSelectedId} />
+              <MediaCard key={item.id} item={item} />
             ))}
           </div>
           <div className="flex items-center justify-between">
@@ -217,38 +211,29 @@ export function MediaLibrary({
       )}
 
       <CreateMediaDialog open={createOpen} onOpenChange={setCreateOpen} />
-      <MediaEditorDialog
-        id={selectedId}
-        onOpenChange={(open) => !open && setSelectedId(null)}
-        onChanged={() => queryClient.invalidateQueries({ queryKey: ['media'] })}
-      />
     </div>
   )
 }
 
-function MediaCard({
-  item,
-  onEdit
-}: {
-  item: MediaItem
-  onEdit: (id: string) => void
-}) {
+function MediaCard({ item }: { item: MediaItem }) {
   return (
-    <Card className="overflow-hidden pt-0">
-      <button
-        type="button"
-        className="relative aspect-[4/3] w-full bg-muted"
-        onClick={() => onEdit(item.id)}
-        aria-label={`Editar ${item.title || item.alt || 'imagem'}`}
+    <Card className="group overflow-hidden pt-0 transition-shadow hover:shadow-md">
+      <Link
+        href={`/media/${item.id}`}
+        className="relative block aspect-[4/3] w-full overflow-hidden bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        aria-label={`Gerenciar ${item.title || item.alt || 'imagem'}`}
       >
         <Image
           src={item.url}
           alt={item.alt || item.title || 'Imagem da biblioteca'}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
-          className="object-cover"
+          className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
         />
-      </button>
+        <div className="absolute inset-x-3 bottom-3 flex justify-end opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+          <Badge className="shadow-sm">Abrir detalhes</Badge>
+        </div>
+      </Link>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="line-clamp-1 text-base">
@@ -270,13 +255,11 @@ function MediaCard({
         </p>
       </CardContent>
       <CardFooter>
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() => onEdit(item.id)}
-        >
-          <Pencil className="size-4" />
-          Gerenciar
+        <Button asChild variant="outline" className="w-full">
+          <Link href={`/media/${item.id}`}>
+            <Pencil className="size-4" />
+            Gerenciar
+          </Link>
         </Button>
       </CardFooter>
     </Card>
@@ -395,84 +378,7 @@ function CreateMediaDialog({
   )
 }
 
-function MediaEditorDialog({
-  id,
-  onOpenChange,
-  onChanged
-}: {
-  id: string | null
-  onOpenChange: (open: boolean) => void
-  onChanged: () => void
-}) {
-  const queryClient = useQueryClient()
-  const details = useQuery({
-    queryKey: ['media', id],
-    queryFn: () => getMediaDetails(id!),
-    enabled: Boolean(id)
-  })
-
-  async function remove() {
-    if (!id || !details.data?.canDelete) return
-    if (
-      !window.confirm(
-        'Excluir esta mídia e todas as versões? Links externos deixarão de funcionar.'
-      )
-    )
-      return
-    try {
-      await deleteMedia(id)
-      toast.success('Mídia excluída.')
-      onChanged()
-      onOpenChange(false)
-    } catch {
-      toast.error('Não foi possível excluir a mídia.')
-    }
-  }
-
-  return (
-    <Dialog open={Boolean(id)} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Gerenciar mídia</DialogTitle>
-          <DialogDescription>
-            Edite dados, arquivo e consulte onde a imagem é utilizada.
-          </DialogDescription>
-        </DialogHeader>
-        {details.isPending ? (
-          <div className="flex justify-center py-16">
-            <Loader2 className="size-6 animate-spin" />
-          </div>
-        ) : details.data ? (
-          <MediaEditor
-            key={details.data.updatedAt}
-            media={details.data}
-            onSaved={async () => {
-              await queryClient.invalidateQueries({ queryKey: ['media'] })
-              onChanged()
-            }}
-          />
-        ) : (
-          <p>Não foi possível carregar a mídia.</p>
-        )}
-        <DialogFooter className="justify-between sm:justify-between">
-          <Button
-            variant="destructive"
-            disabled={!details.data?.canDelete}
-            onClick={remove}
-          >
-            <Trash2 className="size-4" />
-            Excluir
-          </Button>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Fechar
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-function MediaEditor({
+export function MediaEditor({
   media,
   onSaved
 }: {
@@ -557,202 +463,306 @@ function MediaEditor({
   }
 
   return (
-    <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-      <div className="space-y-4">
-        <div className="relative aspect-video overflow-hidden rounded-lg bg-muted">
-          <Image
-            src={media.url}
-            alt={media.alt || 'Prévia'}
-            fill
-            sizes="50vw"
-            className="object-contain"
-          />
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigator.clipboard.writeText(media.url)}
-          >
-            <Copy className="size-4" /> Copiar URL
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href={media.url} target="_blank">
-              <ExternalLink className="size-4" /> Abrir
-            </Link>
-          </Button>
-        </div>
-        <div className="rounded-lg border p-3 text-sm">
-          <p>
-            {media.width ?? '—'} × {media.height ?? '—'} ·{' '}
-            {formatBytes(media.fileSizeBytes)}
-          </p>
-          <p>
-            {media.mimeType ?? 'MIME desconhecido'} · {media.versions.length}{' '}
-            versão(ões)
-          </p>
-        </div>
-        {media.versions.length > 0 && (
-          <div className="space-y-2">
-            <Label>Histórico de versões</Label>
+    <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,0.75fr)]">
+      <div className="space-y-6">
+        <Card className="overflow-hidden pt-0">
+          <div className="relative flex min-h-[360px] items-center justify-center overflow-hidden bg-[linear-gradient(45deg,var(--muted)_25%,transparent_25%),linear-gradient(-45deg,var(--muted)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--muted)_75%),linear-gradient(-45deg,transparent_75%,var(--muted)_75%)] bg-[length:24px_24px] bg-[position:0_0,0_12px,12px_-12px,-12px_0] sm:min-h-[500px]">
+            <div
+              className="relative size-full min-h-[360px] transition-transform sm:min-h-[500px]"
+              style={{
+                transform: `rotate(${rotate}deg) scaleX(${flipHorizontal ? -1 : 1}) scaleY(${flipVertical ? -1 : 1})`
+              }}
+            >
+              <Image
+                src={media.url}
+                alt={media.alt || 'Prévia da mídia'}
+                fill
+                sizes="(max-width: 1280px) 100vw, 65vw"
+                className="object-contain p-4"
+              />
+            </div>
+          </div>
+          <CardFooter className="flex flex-col items-stretch gap-4 border-t py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0 text-sm">
+              <p className="truncate font-medium">
+                {media.originalFilename || media.title || 'Imagem'}
+              </p>
+              <p className="text-muted-foreground">
+                {media.width ?? '—'} × {media.height ?? '—'} px ·{' '}
+                {formatBytes(media.fileSizeBytes)} ·{' '}
+                {media.mimeType ?? 'tipo desconhecido'}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(media.url)
+                  toast.success('URL copiada.')
+                }}
+              >
+                <Copy className="size-4" /> Copiar URL
+              </Button>
+              <Button asChild variant="outline" size="sm">
+                <Link href={media.url} target="_blank">
+                  <ExternalLink className="size-4" /> Abrir original
+                </Link>
+              </Button>
+            </div>
+          </CardFooter>
+        </Card>
+
+        {media.canEditImage && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Editar arquivo</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Substitua, gire, espelhe ou recorte a imagem. Uma nova versão
+                será criada e os locais que já usam esta mídia continuarão
+                funcionando.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="media-version-file">
+                  Substituir arquivo (opcional)
+                </Label>
+                <Input
+                  id="media-version-file"
+                  type="file"
+                  accept={ALLOWED_MEDIA_TYPES.join(',')}
+                  onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Ajustes rápidos</Label>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant={rotate ? 'secondary' : 'outline'}
+                    onClick={() => setRotate((value) => (value + 90) % 360)}
+                  >
+                    <RotateCw className="size-4" /> Girar 90°
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={flipHorizontal ? 'secondary' : 'outline'}
+                    onClick={() => setFlipHorizontal((value) => !value)}
+                  >
+                    Espelhar horizontal
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={flipVertical ? 'secondary' : 'outline'}
+                    onClick={() => setFlipVertical((value) => !value)}
+                  >
+                    Espelhar vertical
+                  </Button>
+                </div>
+                {(rotate !== 0 || flipHorizontal || flipVertical) && (
+                  <p className="text-xs text-muted-foreground">
+                    Prévia: rotação {rotate}°
+                    {flipHorizontal ? ' · espelhada horizontalmente' : ''}
+                    {flipVertical ? ' · espelhada verticalmente' : ''}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <div>
+                  <Label>Recorte em pixels (opcional)</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Preencha os quatro valores somente se precisar de um recorte
+                    preciso.
+                  </p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  {(
+                    [
+                      ['left', 'Esquerda'],
+                      ['top', 'Topo'],
+                      ['width', 'Largura'],
+                      ['height', 'Altura']
+                    ] as const
+                  ).map(([field, label]) => (
+                    <div key={field} className="space-y-1.5">
+                      <Label htmlFor={`crop-${field}`} className="text-xs">
+                        {label}
+                      </Label>
+                      <Input
+                        id={`crop-${field}`}
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={crop[field]}
+                        onChange={(event) =>
+                          setCrop((current) => ({
+                            ...current,
+                            [field]: event.target.value
+                          }))
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="flex flex-col items-start justify-between gap-3 border-t sm:flex-row sm:items-center">
+              <p className="text-xs text-muted-foreground">
+                A versão anterior permanece no histórico.
+              </p>
+              <Button
+                type="button"
+                disabled={
+                  pending ||
+                  (!file &&
+                    rotate === 0 &&
+                    !flipHorizontal &&
+                    !flipVertical &&
+                    Object.values(crop).every((value) => value === ''))
+                }
+                onClick={applyTransform}
+              >
+                {pending && <Loader2 className="size-4 animate-spin" />}
+                Criar nova versão
+              </Button>
+            </CardFooter>
+          </Card>
+        )}
+      </div>
+
+      <div className="space-y-6 xl:sticky xl:top-20">
+        <Card>
+          <CardHeader>
+            <CardTitle>Informações da mídia</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Estes dados ajudam na organização, acessibilidade e atribuição da
+              imagem.
+            </p>
+          </CardHeader>
+          <form onSubmit={saveMetadata}>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="media-title">Título</Label>
+                <Input
+                  id="media-title"
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  placeholder="Nome interno da imagem"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="media-alt">Texto alternativo</Label>
+                <Textarea
+                  id="media-alt"
+                  value={alt}
+                  onChange={(event) => setAlt(event.target.value)}
+                  placeholder="Descreva o conteúdo visual para leitores de tela"
+                  rows={3}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="media-caption">Legenda</Label>
+                <Textarea
+                  id="media-caption"
+                  value={caption}
+                  onChange={(event) => setCaption(event.target.value)}
+                  placeholder="Texto exibido junto à imagem"
+                  rows={3}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="media-credit">Crédito</Label>
+                <Input
+                  id="media-credit"
+                  value={credit}
+                  onChange={(event) => setCredit(event.target.value)}
+                  placeholder="Autor ou fonte"
+                />
+              </div>
+              {media.source === 'EXTERNAL' && (
+                <div className="space-y-2">
+                  <Label htmlFor="media-url">URL externa</Label>
+                  <Input
+                    id="media-url"
+                    type="url"
+                    value={url}
+                    onChange={(event) => setUrl(event.target.value)}
+                  />
+                </div>
+              )}
+            </CardContent>
+            <CardFooter className="justify-end border-t">
+              <Button type="submit" disabled={pending}>
+                {pending && <Loader2 className="size-4 animate-spin" />}
+                Salvar informações
+              </Button>
+            </CardFooter>
+          </form>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Uso da imagem</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              {media.usageCount === 0
+                ? 'Esta mídia ainda não está vinculada a uma publicação.'
+                : `Utilizada em ${media.usageCount} local(is), sendo ${media.coverUsageCount} como capa e ${media.bodyUsageCount} no conteúdo.`}
+            </p>
+          </CardHeader>
+          {media.usages.length > 0 && (
+            <CardContent className="space-y-2">
+              {media.usages.map((usage) => (
+                <Link
+                  key={`${usage.id}-${usage.kind}`}
+                  href={`/posts/edit/${usage.id}`}
+                  className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm transition-colors hover:bg-muted"
+                >
+                  <span className="line-clamp-2 font-medium">
+                    {usage.title}
+                  </span>
+                  <Badge variant="outline">
+                    {usage.kind === 'cover' ? 'Capa' : 'Conteúdo'}
+                  </Badge>
+                </Link>
+              ))}
+            </CardContent>
+          )}
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Histórico de versões</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              {media.versions.length} versão(ões) armazenada(s).
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-2">
             {media.versions.map((version) => (
               <Link
                 key={version.id}
                 href={version.url}
                 target="_blank"
-                className="flex items-center justify-between rounded border p-2 text-xs hover:bg-muted"
+                className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm transition-colors hover:bg-muted"
               >
                 <span>
                   {new Intl.DateTimeFormat('pt-BR').format(
                     new Date(version.createdAt)
-                  )}{' '}
-                  · {formatBytes(version.fileSizeBytes)}
+                  )}
+                  <span className="block text-xs text-muted-foreground">
+                    {version.width} × {version.height} ·{' '}
+                    {formatBytes(version.fileSizeBytes)}
+                  </span>
                 </span>
-                {version.isCurrent && <Badge>Atual</Badge>}
+                {version.isCurrent ? (
+                  <Badge>Atual</Badge>
+                ) : (
+                  <ExternalLink className="size-4 text-muted-foreground" />
+                )}
               </Link>
             ))}
-          </div>
-        )}
-        {media.usages.length > 0 && (
-          <div className="space-y-2">
-            <Label>Usada em {media.usageCount} local(is)</Label>
-            {media.usages.map((usage) => (
-              <Link
-                key={`${usage.id}-${usage.kind}`}
-                href={`/posts/edit/${usage.id}`}
-                className="block rounded border p-2 text-sm hover:bg-muted"
-              >
-                {usage.title} · {usage.kind === 'cover' ? 'capa' : 'conteúdo'}
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-      <div className="space-y-6">
-        <form className="space-y-3" onSubmit={saveMetadata}>
-          <div>
-            <Label>Título</Label>
-            <Input
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-            />
-          </div>
-          <div>
-            <Label>Texto alternativo</Label>
-            <Input
-              value={alt}
-              onChange={(event) => setAlt(event.target.value)}
-            />
-          </div>
-          <div>
-            <Label>Legenda</Label>
-            <Textarea
-              value={caption}
-              onChange={(event) => setCaption(event.target.value)}
-            />
-          </div>
-          <div>
-            <Label>Crédito</Label>
-            <Input
-              value={credit}
-              onChange={(event) => setCredit(event.target.value)}
-            />
-          </div>
-          {media.source === 'EXTERNAL' && (
-            <div>
-              <Label>URL externa</Label>
-              <Input
-                type="url"
-                value={url}
-                onChange={(event) => setUrl(event.target.value)}
-              />
-            </div>
-          )}
-          <Button type="submit" disabled={pending}>
-            {pending && <Loader2 className="size-4 animate-spin" />}Salvar dados
-          </Button>
-        </form>
-        {media.canEditImage && (
-          <div className="space-y-3 border-t pt-5">
-            <Label>Nova versão da imagem</Label>
-            <Input
-              type="file"
-              accept={ALLOWED_MEDIA_TYPES.join(',')}
-              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-            />
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setRotate((value) => (value + 90) % 360)}
-              >
-                <RotateCw className="size-4" /> Girar {rotate}°
-              </Button>
-              <Button
-                type="button"
-                variant={flipHorizontal ? 'default' : 'outline'}
-                onClick={() => setFlipHorizontal((value) => !value)}
-              >
-                Espelhar H
-              </Button>
-              <Button
-                type="button"
-                variant={flipVertical ? 'default' : 'outline'}
-                onClick={() => setFlipVertical((value) => !value)}
-              >
-                Espelhar V
-              </Button>
-            </div>
-            <div className="space-y-2">
-              <Label>Recorte opcional em pixels</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {(
-                  [
-                    ['left', 'Esquerda'],
-                    ['top', 'Topo'],
-                    ['width', 'Largura'],
-                    ['height', 'Altura']
-                  ] as const
-                ).map(([field, label]) => (
-                  <Input
-                    key={field}
-                    type="number"
-                    min="0"
-                    placeholder={label}
-                    value={crop[field]}
-                    onChange={(event) =>
-                      setCrop((current) => ({
-                        ...current,
-                        [field]: event.target.value
-                      }))
-                    }
-                  />
-                ))}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Informe os quatro valores ou deixe todos vazios.
-              </p>
-            </div>
-            <Button
-              type="button"
-              disabled={
-                pending ||
-                (!file &&
-                  rotate === 0 &&
-                  !flipHorizontal &&
-                  !flipVertical &&
-                  Object.values(crop).every((value) => value === ''))
-              }
-              onClick={applyTransform}
-            >
-              {pending && <Loader2 className="size-4 animate-spin" />}Criar nova
-              versão
-            </Button>
-            <p className="text-xs text-muted-foreground">
-              A URL anterior continuará funcionando permanentemente.
-            </p>
-          </div>
-        )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

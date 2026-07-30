@@ -1,0 +1,26 @@
+import {
+  BookOpenText,
+  FileText,
+  Globe,
+  Images,
+  KeyRound,
+  LayoutDashboard,
+  Users
+} from 'lucide-react'
+
+export const primaryNavigation = [
+  { label: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { label: 'Publicações', href: '/posts', icon: FileText },
+  { label: 'Mídia', href: '/media', icon: Images },
+  { label: 'Usuários', href: '/users', icon: Users },
+  { label: 'Integrações', href: '/integrations', icon: KeyRound }
+] as const
+
+export const externalNavigation = [
+  { label: 'Site Certifica', href: 'https://certifica.eng.br', icon: Globe },
+  {
+    label: 'Blog Certifica',
+    href: 'https://blog.certifica.eng.br',
+    icon: BookOpenText
+  }
+] as const

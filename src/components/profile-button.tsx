@@ -1,8 +1,9 @@
-import { LogOut, Settings, User } from 'lucide-react'
+import { LogOut, Settings } from 'lucide-react'
 import Link from 'next/link'
 
 import { auth } from '@/auth/auth'
 import { getInitials } from '@/utils/format'
+import { getUserAvatarURL } from '@/utils/utils'
 
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import {
@@ -12,93 +13,83 @@ import {
   DropdownMenuTrigger
 } from './ui/dropdown-menu'
 import { Separator } from './ui/separator'
-import { getUserAvatarURL } from '@/utils/utils'
 
 export default async function ProfileButton() {
   const { user } = await auth()
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex items-center gap-3 outline-none mr-15">
-        <div className="flex gap-2">
-          <Avatar className="size-12">
+      <DropdownMenuTrigger className="flex min-h-10 items-center gap-2 rounded-lg px-2 outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring">
+        <div className="flex items-center gap-2">
+          <Avatar className="size-8">
             <AvatarImage
               src={user?.username ? getUserAvatarURL(user?.username) : ''}
               alt={`@${user?.username}`}
               className="h-full w-full object-cover"
             />
-            <AvatarFallback className="bg-accent text-white font-medium">
+            <AvatarFallback className="bg-primary text-primary-foreground font-medium">
               {getInitials(user?.name || '')}
             </AvatarFallback>
           </Avatar>
-          <div className="flex flex-col ">
-            <span className="text-sm font-bold text-black dark:text-white">
+          <div className="hidden flex-col text-start sm:flex">
+            <span className="max-w-36 truncate text-sm font-medium text-foreground">
               {user?.name}
             </span>
-            <span className="text-xs font-thin text-muted-foreground text-start">
+            <span className="max-w-36 truncate text-xs text-muted-foreground">
               @{user?.username}
             </span>
           </div>
         </div>
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        className="mt-6 w-[354px] bg-muted hover:bg-muted/90"
-      >
+      <DropdownMenuContent align="end" className="w-72">
         <DropdownMenuItem
           asChild
-          className="flex cursor-pointer items-center justify-between p-4 transition-colors hover:bg-zinc-200 dark:hover:bg-black/10 focus:bg-transparent dark:focus:bg-black/10 focus:text-black"
+          className="cursor-default p-3 focus:bg-transparent"
         >
-          <Link href="/#">
+          <div className="flex w-full items-center gap-3">
             <div className="flex gap-2">
-              <Avatar className="size-12">
+              <Avatar className="size-10">
                 <AvatarImage
                   src={user?.username ? getUserAvatarURL(user?.username) : ''}
                   alt={`@${user?.username}`}
                   className="h-full w-full object-cover"
                 />
-                <AvatarFallback className="bg-accent text-white font-medium">
+                <AvatarFallback className="bg-primary text-primary-foreground font-medium">
                   {getInitials(user?.name || '')}
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col justify-center">
-                <span className="text-sm font-bold text-black dark:text-white">
+                <span className="text-sm font-medium text-foreground">
                   {user?.name}
                 </span>
-                <span className="text-xs font-thin text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   @{user?.username}
                 </span>
               </div>
             </div>
-            {/*}
-            <div className="rounded-sm p-2 hover:bg-green-900/20 hover:text-black transition-colors bg-green-950/10">
-              <span>Ver Perfil</span>
-            </div>{*/}
+          </div>
+        </DropdownMenuItem>
+        <Separator />
+        <DropdownMenuItem asChild className="cursor-pointer p-3">
+          <Link href="/settings" className="flex gap-3 text-foreground">
+            <Settings className="size-5 text-muted-foreground" />
+            <div>
+              <p className="text-sm font-medium">Minha conta</p>
+              <span className="text-xs text-muted-foreground">
+                Gerencie dados e preferências
+              </span>
+            </div>
           </Link>
         </DropdownMenuItem>
         <Separator />
         <DropdownMenuItem
           asChild
-          className="cursor-pointer p-4 transition-colors   focus:bg-black/5 dark:focus:bg-black/10 focus:text-black "
+          variant="destructive"
+          className="cursor-pointer p-3"
         >
-          <a href="/settings" className="text-black flex gap-4">
-            <Settings className="size-7 text-accent " />
-            <div>
-              <h1 className="font-bold">Minha conta</h1>
-              <span className="text-accent/90 font-normal text-xs">
-                Gerencie dados e preferências
-              </span>
-            </div>
-          </a>
-        </DropdownMenuItem>
-        <Separator />
-        <DropdownMenuItem
-          asChild
-          className="cursor-pointer p-4 transition-colors  focus:bg-black/5 dark:focus:bg-black/10 text-red-500 focus:text-red-500"
-        >
-          <a href="/api/auth/sign-out" className="text-black ">
-            <LogOut className="size-7 text-red-500" />
-            <span className="font-bold">Sair da conta</span>
+          <a href="/api/auth/sign-out" className="flex gap-3">
+            <LogOut className="size-5" />
+            <span className="text-sm font-medium">Sair da conta</span>
           </a>
         </DropdownMenuItem>
       </DropdownMenuContent>
