@@ -8,6 +8,7 @@ export interface GetProfileResponse {
     email?: string | null
     description?: string | null
     role: 'ADMIN' | 'USER' | 'EDITOR'
+    mustChangePassword: boolean
   }
 }
 

@@ -13,7 +13,7 @@ function isCurrent(pathname: string, href: string) {
   return href === '/' ? pathname === '/' : pathname.startsWith(href)
 }
 
-export default function NavBar() {
+export default function NavBar({ isAdmin }: { isAdmin: boolean }) {
   const { isOpen } = useMenu()
   const pathname = usePathname()
 
@@ -27,7 +27,7 @@ export default function NavBar() {
     >
       <nav className="flex h-full flex-col justify-between p-3">
         <div className="space-y-1">
-          {primaryNavigation.map((item) => {
+          {primaryNavigation.filter((item) => !('adminOnly' in item) || !item.adminOnly || isAdmin).map((item) => {
             const active = isCurrent(pathname, item.href)
             const Icon = item.icon
             return (

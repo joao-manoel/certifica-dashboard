@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 
-import { isAuthenticated } from '@/auth/auth'
+import { auth } from '@/auth/auth'
 import Logo from '@/components/logo'
 import { ThemeSwitcher } from '@/components/theme-switcher'
 
@@ -9,7 +9,8 @@ export default async function AuthLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  if (await isAuthenticated()) {
+  const { user } = await auth()
+  if (user) {
     redirect('/')
   }
   return (

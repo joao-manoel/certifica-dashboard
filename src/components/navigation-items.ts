@@ -12,7 +12,7 @@ export const primaryNavigation = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
   { label: 'Publicações', href: '/posts', icon: FileText },
   { label: 'Mídia', href: '/media', icon: Images },
-  { label: 'Usuários', href: '/users', icon: Users },
+  { label: 'Usuários', href: '/users', icon: Users, adminOnly: true },
   { label: 'Integrações', href: '/integrations', icon: KeyRound }
 ] as const
 

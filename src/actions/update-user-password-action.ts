@@ -3,6 +3,7 @@
 import { updateUserPassword } from '@/http/update-user-password'
 import { HTTPError } from 'ky'
 import { z } from 'zod'
+import { cookies } from 'next/headers'
 
 const updatePasswordSelfSchema = z
   .object({
@@ -61,9 +62,11 @@ export async function updatePasswordAction(form: FormData) {
       }
     }
 
+    ;(await cookies()).delete('token')
+
     return {
       success: true,
-      message: 'Senha atualizada com sucesso.',
+      message: 'Senha atualizada. Entre novamente com a nova senha.',
       errors: null
     }
   } catch (err) {

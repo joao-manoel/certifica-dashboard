@@ -1,14 +1,18 @@
 import { redirect } from 'next/navigation'
 
-import { isAuthenticated } from '@/auth/auth'
+import { auth } from '@/auth/auth'
 import Header from '@/components/header'
 import NavBar from '@/components/navbar'
 
 export default async function DashboardLayout({
   children
 }: Readonly<{ children: React.ReactNode }>) {
-  if (!(await isAuthenticated())) {
+  const { user } = await auth()
+  if (!user) {
     redirect('/sign-in')
+  }
+  if (user.mustChangePassword) {
+    redirect('/change-password')
   }
 
   return (
@@ -19,9 +23,9 @@ export default async function DashboardLayout({
       >
         Ir para o conteúdo principal
       </a>
-      <Header />
+      <Header isAdmin={user.role === 'ADMIN'} />
       <div className="flex min-h-[calc(100dvh-4rem)]">
-        <NavBar />
+        <NavBar isAdmin={user.role === 'ADMIN'} />
         <main
           id="main-content"
           className="min-w-0 flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-7"

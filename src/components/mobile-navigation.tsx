@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils'
 import Logo from './logo'
 import { externalNavigation, primaryNavigation } from './navigation-items'
 
-export function MobileNavigation() {
+export function MobileNavigation({ isAdmin }: { isAdmin: boolean }) {
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
 
@@ -43,7 +43,7 @@ export function MobileNavigation() {
           <SheetDescription>Navegação do painel Certifica</SheetDescription>
         </SheetHeader>
         <nav className="space-y-1 p-4" aria-label="Navegação mobile">
-          {primaryNavigation.map((item) => {
+          {primaryNavigation.filter((item) => !('adminOnly' in item) || !item.adminOnly || isAdmin).map((item) => {
             const Icon = item.icon
             const active =
               item.href === '/'

@@ -1,9 +1,7 @@
 import { type ProxyConfig, type NextRequest, NextResponse } from 'next/server'
 import { env } from './lib/env'
 
-const publicRoutes = [
-  { path: '/sign-in', whenAuthenticated: 'redirect' }
-] as const
+const publicRoutes = ['/sign-in'] as const
 
 const REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE = `${env.NEXT_PUBLIC_BASE_URL}/sign-in`
 
@@ -59,15 +57,20 @@ function getJwtExpSeconds(token: string): number | null {
 
 export function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname
-  const publicRoute = publicRoutes.find((route) => route.path === path)
+  const isPublicRoute = publicRoutes.includes(
+    path as (typeof publicRoutes)[number]
+  )
   const authCookie = request.cookies.get('token')
   const authToken = authCookie?.value
+
+  // A página de login precisa continuar acessível quando existe um cookie
+  // expirado, revogado ou emitido antes da versão atual da sessão. A validação
+  // completa é feita pelo backend no layout de autenticação.
+  if (isPublicRoute) return NextResponse.next()
 
   // Sem token
   if (!authToken) {
     // Pode acessar rotas públicas
-    if (publicRoute) return NextResponse.next()
-    // Bloqueia rotas privadas
     return NextResponse.redirect(REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE)
   }
 
@@ -86,13 +89,6 @@ export function proxy(request: NextRequest) {
       res.cookies.set('token', '', { path: '/', expires: new Date(0) })
     }
     return res
-  }
-
-  // Token válido: se rota pública com regra de redirect, manda pra home
-  if (publicRoute?.whenAuthenticated === 'redirect') {
-    const redirectURL = request.nextUrl.clone()
-    redirectURL.pathname = '/'
-    return NextResponse.redirect(redirectURL)
   }
 
   // Token válido em rota privada: segue

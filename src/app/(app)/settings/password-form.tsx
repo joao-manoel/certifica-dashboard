@@ -3,10 +3,20 @@ import { updatePasswordAction } from '@/actions/update-user-password-action'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { useFormState } from '@/hooks/use-form-state'
 import { CheckCircle2Icon, Loader2, OctagonAlert } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 export default function PasswordForm() {
+  const router = useRouter()
   const [{ errors, success, message }, handleSubmit, isPending] =
     useFormState(updatePasswordAction)
+
+  useEffect(() => {
+    if (success) {
+      const timer = window.setTimeout(() => router.replace('/sign-in'), 900)
+      return () => window.clearTimeout(timer)
+    }
+  }, [router, success])
 
   return (
     <form className="p-5 space-y-6" onSubmit={handleSubmit}>
