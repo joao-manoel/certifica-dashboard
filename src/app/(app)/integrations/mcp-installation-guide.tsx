@@ -67,8 +67,7 @@ startup_timeout_sec = 30.0
 
 [mcp_servers.certifica.env]
 CERTIFICA_API_URL = "${apiUrl}"
-CERTIFICA_API_TOKEN = "COLE_SEU_TOKEN_CERTIFICA"
-CERTIFICA_API_KEY = "${apiKey}"`
+CERTIFICA_API_TOKEN = "COLE_SEU_TOKEN_CERTIFICA"`
 
   const claudeConfig = `{
   "mcpServers": {
