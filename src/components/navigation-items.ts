@@ -1,5 +1,6 @@
 import {
   BookOpenText,
+  BriefcaseBusiness,
   FileText,
   Globe,
   Images,
@@ -11,6 +12,7 @@ import {
 export const primaryNavigation = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
   { label: 'Publicações', href: '/posts', icon: FileText },
+  { label: 'Portfólio', href: '/portfolio', icon: BriefcaseBusiness },
   { label: 'Mídia', href: '/media', icon: Images },
   { label: 'Usuários', href: '/users', icon: Users, adminOnly: true },
   { label: 'Integrações', href: '/integrations', icon: KeyRound }
