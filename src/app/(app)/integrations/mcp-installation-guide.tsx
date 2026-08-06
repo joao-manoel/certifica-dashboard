@@ -89,8 +89,7 @@ CERTIFICA_API_KEY = "${apiKey}"`
       "args": ["/c", "npx", "-y", "${packageName}"],
       "env": {
         "CERTIFICA_API_URL": "${apiUrl}",
-        "CERTIFICA_API_TOKEN": "COLE_SEU_TOKEN_CERTIFICA",
-        "CERTIFICA_API_KEY": "${apiKey}"
+        "CERTIFICA_API_TOKEN": "COLE_SEU_TOKEN_CERTIFICA"
       }
     }
   }

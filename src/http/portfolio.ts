@@ -2,7 +2,7 @@ import type { PortfolioCategory, PortfolioListResponse, PortfolioProject, Portfo
 import { api } from './api-client'
 
 export type PortfolioPayload = {
-  title: string; slug?: string; summary: string; content: { format: 'html'; version: 1; html: string }
+  title: string; summary: string; content: { format: 'html'; version: 1; html: string }
   status: PortfolioStatus; featured: boolean; displayOrder: number; location?: string | null
   architects: string[]; areaSquareMeters?: number | null; completionYear?: number | null
   clientName?: string | null; servicesProvided: string[]; seoTitle?: string | null
