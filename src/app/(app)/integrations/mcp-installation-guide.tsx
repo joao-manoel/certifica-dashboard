@@ -14,23 +14,12 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card'
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger
-} from '@/components/ui/tabs'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 const packageName = 'certifica-mcp'
 const packageVersion = '0.1.0'
 
-function CodeBlock({
-  label,
-  value
-}: {
-  label: string
-  value: string
-}) {
+function CodeBlock({ label, value }: { label: string; value: string }) {
   const [copied, setCopied] = useState(false)
 
   async function copy() {
@@ -128,7 +117,9 @@ CERTIFICA_API_KEY = "${apiKey}"`
       <CardContent className="space-y-5">
         <ol className="grid gap-3 text-sm md:grid-cols-3">
           <li className="rounded-lg border p-3">
-            <span className="mb-1 block font-medium">1. Prepare o ambiente</span>
+            <span className="mb-1 block font-medium">
+              1. Prepare o ambiente
+            </span>
             Instale o Node.js 20 ou mais recente.
           </li>
           <li className="rounded-lg border p-3">
@@ -136,7 +127,9 @@ CERTIFICA_API_KEY = "${apiKey}"`
             Use o formulário abaixo e copie o token exibido.
           </li>
           <li className="rounded-lg border p-3">
-            <span className="mb-1 block font-medium">3. Configure o cliente</span>
+            <span className="mb-1 block font-medium">
+              3. Configure o cliente
+            </span>
             Cole o token no lugar indicado e reinicie o cliente.
           </li>
         </ol>
